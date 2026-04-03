@@ -1,198 +1,537 @@
 /* ==========================================================================
    SIAORB Corporate - カスタムCSS
-   セクション別スタイル定義
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
+   ブランドカラー変数
+   -------------------------------------------------------------------------- */
+:root {
+  --siaorb-accent-cyan:  #68d4e0;  /* ロゴシアン: トレイル・CTA・アイコン */
+  --siaorb-primary-blue: #326daf;  /* ロゴブルー: 見出し・リンク・タグ */
+  --siaorb-dark:         #080e1a;  /* 背景ダーク */
+  --siaorb-dark-mid:     #0d1b2a;  /* 背景ダーク中間 */
+  --siaorb-light:        #f0f3f8;  /* 背景ライト */
+  --siaorb-text:         #1a1a2e;  /* 本文テキスト */
+  --siaorb-text-muted:   #6b7280;  /* サブテキスト */
+}
+
+/* --------------------------------------------------------------------------
+   フォント: Inter（英数字） + システム日本語フォント
+   -------------------------------------------------------------------------- */
+body,
+h1, h2, h3, h4, h5, h6,
+p, a, span, li, dt, dd, td, th,
+input, textarea, button, select {
+  font-family: 'Inter', -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+               'BIZ UDPGothic', Meiryo, sans-serif !important;
+}
+
+/* --------------------------------------------------------------------------
    共通セクション
+   コンテンツ幅: max-width 1200px / 中央寄せ
+   PC: padding 40px / SP: padding 5% (= コンテンツ幅 約90%)
    -------------------------------------------------------------------------- */
 .siaorb-section-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 80px 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 88px 40px;
 }
 
-.siaorb-section-header {
-  text-align: center;
-  margin-bottom: 56px;
+/* ============================================================
+   ページ背景デフォルト（FV と同色）
+   ============================================================ */
+html,
+body {
+  background-color: #080e1a;
 }
 
-.siaorb-section-header__en {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--siaorb-highlight);
-  text-transform: uppercase;
-  margin-bottom: 8px;
+/* SWELL コンテンツラッパーの上部余白のみ除去（背景は残す） */
+.home .l-content,
+.home .l-contents,
+.home #contents,
+.home .l-main,
+.home #main,
+.home .p-article,
+.home .l-article,
+.home .p-wrap,
+.home .p-entry,
+.home .p-entryBody {
+  padding-top: 0 !important;
+  margin-top:  0 !important;
 }
 
-.siaorb-section-header__ja {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  color: var(--siaorb-primary);
-  margin: 0;
+/* ============================================================
+   全セクション: SWELL コンテナから全幅解放
+   背景切り替えは JS (IntersectionObserver) が body の
+   --siaorb-bg-current を更新し、body の transition で滑らかに変化。
+   各セクション自身も同色背景を持つことでコントラストを保証。
+   ============================================================ */
+body {
+  --siaorb-bg-current: var(--siaorb-dark);
+  background-color: var(--siaorb-bg-current) !important;
+  transition: background-color 1s ease;
+}
+
+.siaorb-news,
+.siaorb-services,
+.siaorb-philosophy,
+.siaorb-company,
+.siaorb-contact {
+  width: 100vw;
+  margin-left:  calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
   position: relative;
-  display: inline-block;
-  padding-bottom: 16px;
 }
 
-.siaorb-section-header__ja::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 3px;
-  background: var(--siaorb-highlight);
-  border-radius: 2px;
+/* 各セクションの実背景色（コントラスト保証用）*/
+.siaorb-news    { background-color: var(--siaorb-light); }
+.siaorb-contact { background-color: #ffffff; }
+/* company は philosophy と統合 → デフォルト暗紺。is-light で白に */
+.siaorb-company { background-color: var(--siaorb-dark-mid); color: #fff; }
+
+/* Services: デフォルト白。JS が .is-dark を付与したらネイビーに反転 */
+.siaorb-services {
+  background-color: #ffffff;
+  transition: background-color 0.9s ease, color 0.9s ease;
+}
+.siaorb-services .siaorb-services__name,
+.siaorb-services .siaorb-services__desc {
+  transition: color 0.9s ease;
+}
+.siaorb-services.is-dark {
+  background-color: var(--siaorb-dark-mid);
+}
+.siaorb-services.is-dark .siaorb-services__name {
+  color: #fff;
+}
+.siaorb-services.is-dark .siaorb-services__desc {
+  color: rgba(200, 220, 240, 0.8);
+}
+.siaorb-services.is-dark .siaorb-section-header__title {
+  color: rgba(104, 212, 224, 0.18) !important;
+}
+.siaorb-services.is-dark .siaorb-services__number {
+  color: rgba(255, 255, 255, 0.25);
 }
 
-.siaorb-section-footer {
-  text-align: center;
-  margin-top: 48px;
+/* Philosophy: デフォルト暗紺。JS が .is-light を付与したら白背景に反転 */
+.siaorb-philosophy {
+  background-color: var(--siaorb-dark-mid);
+  color: #fff;
+  transition: background-color 0.9s ease, color 0.9s ease;
+}
+.siaorb-philosophy.is-light {
+  background-color: #ffffff;
+  color: var(--siaorb-text);
+}
+.siaorb-philosophy.is-light .siaorb-section-header__title {
+  color: rgba(50, 109, 175, 0.15) !important;
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__vision-title,
+.siaorb-philosophy.is-light .siaorb-philosophy__mission-title,
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-title {
+  color: var(--siaorb-primary-blue);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__vision-text {
+  color: var(--siaorb-text);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__mission-list li {
+  color: var(--siaorb-text-muted);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__mission-list li::before {
+  background: var(--siaorb-primary-blue);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-text p {
+  color: var(--siaorb-text-muted);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-sign {
+  border-top-color: #e0e4ec;
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-role {
+  color: #999;
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-name-ja {
+  color: var(--siaorb-text);
+}
+.siaorb-philosophy.is-light .siaorb-philosophy__greeting-photo-placeholder {
+  background: rgba(50, 109, 175, 0.08);
+  border-color: rgba(50, 109, 175, 0.2);
+}
+
+/* company + philosophy 統合セクション: 代表挨拶写真 */
+.siaorb-philosophy__greeting-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  border-radius: 4px;
+}
+
+/* company セクション: is-light 時の会社概要テーブル */
+.siaorb-company.is-light .siaorb-company-table th,
+.siaorb-company.is-light .siaorb-company-table td {
+  border-bottom-color: #e4e8f0;
+}
+.siaorb-company.is-light .siaorb-company-table th { color: #666; }
+.siaorb-company.is-light .siaorb-company-table td { color: var(--siaorb-text); }
+.siaorb-company.is-light .siaorb-company-table a  { color: #1a6cb5; }
+
+/* company セクション: デフォルト（暗紺）時の会社概要テーブル */
+.siaorb-company .siaorb-company-table th,
+.siaorb-company .siaorb-company-table td {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  transition: border-color 0.9s ease, color 0.9s ease;
+}
+.siaorb-company .siaorb-company-table th { color: rgba(255, 255, 255, 0.55); font-weight: 600; }
+.siaorb-company .siaorb-company-table td { color: rgba(255, 255, 255, 0.9); }
+.siaorb-company .siaorb-company-table a  { color: var(--siaorb-accent-cyan); }
+.siaorb-company .siaorb-company-table td ul li { color: rgba(255, 255, 255, 0.85); }
+
+/* テーブルと上のコンテンツの間隔 */
+.siaorb-company__table-wrap {
+  margin-top: 72px;
+  padding-top: 72px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.9s ease;
+}
+.siaorb-company.is-light .siaorb-company__table-wrap {
+  border-top-color: #e4e8f0;
+}
+
+/* ----------------------------------------------------------------
+   セクション見出し（飾り文字）
+   - Cormorant Garamond Italic / ロゴブルー #326daf ベース
+   - 極端なジャンプ率で装飾的に
+   - section-inner の左 padding を突き破って画面左端方向へはみ出す
+   ---------------------------------------------------------------- */
+.siaorb-section-header {
+  margin-bottom: 40px;
+  overflow: visible;
+}
+
+.siaorb-section-header__title {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif !important;
+  font-style: italic !important;
+  font-weight: 700 !important;
+  font-size: clamp(4.5rem, 12vw, 11rem) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.04em;
+  white-space: nowrap;          /* 1行に固定 */
+  overflow: visible;
+  /* 明背景: ロゴブルーで薄く */
+  color: rgba(50, 109, 175, 0.15) !important;
+  margin: 0 !important;
+  /* 左にはみ出す: section-inner padding(40px) + 20px */
+  margin-left: -60px !important;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 暗背景（Philosophy）: シアンで薄く */
+.siaorb-philosophy .siaorb-section-header__title {
+  color: rgba(104, 212, 224, 0.18) !important;
 }
 
 /* 共通ボタン */
 .siaorb-btn {
   display: inline-block;
   padding: 14px 40px;
-  border-radius: 4px;
+  border-radius: 3px;
   font-weight: 700;
   font-size: 0.9rem;
   text-decoration: none;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease,
+              border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .siaorb-btn--outline {
-  border: 2px solid var(--siaorb-primary);
-  color: var(--siaorb-primary);
+  border: 2px solid var(--siaorb-primary-blue);
+  color: var(--siaorb-primary-blue) !important;
   background: transparent;
 }
 
 .siaorb-btn--outline:hover {
-  background: var(--siaorb-primary);
-  color: #fff;
+  background: var(--siaorb-primary-blue);
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(50, 109, 175, 0.3);
+}
+
+/* screen-reader-text ユーティリティ */
+.screen-reader-text {
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+/* PCのみ改行 */
+@media (max-width: 768px) {
+  .siaorb-br--pc { display: none; }
 }
 
 /* --------------------------------------------------------------------------
-   1. MV（メインビジュアル）
+   SWELL コンテンツエリアの上部余白をフロントページで除去
    -------------------------------------------------------------------------- */
-.siaorb-mv {
-  background: linear-gradient(135deg, var(--siaorb-primary) 0%, var(--siaorb-accent) 100%);
-  color: #fff;
-  min-height: 600px;
-  display: flex;
-  align-items: center;
+.home .l-content,
+.home .l-contents,
+.home #contents,
+.home .l-main,
+.home #main,
+.home .p-article,
+.home .l-article,
+.home .p-wrap {
+  padding-top: 0 !important;
+  margin-top:  0 !important;
 }
 
-.siaorb-mv__inner {
-  max-width: 1100px;
+/* --------------------------------------------------------------------------
+   1. FV（ファーストビュー）
+   コントラスト確保: 濃紺 × ダークネイビー背景に白テキスト
+   SWELL のラッパーを突き破って全幅表示させる
+   -------------------------------------------------------------------------- */
+.siaorb-fv {
+  /* フルビューポート幅対応（SWELL コンテナ内でも全幅に） */
+  width: 100vw !important;
+  margin-top:   0 !important;
+  margin-left:  calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  /* ダーク背景: 黒に近い濃紺 → 深いネイビーブルー */
+  background-color: #080e1a !important;
+  background-image: linear-gradient(
+    150deg,
+    #080e1a 0%,
+    #0d1b2a 40%,
+    #0f2744 70%,
+    #0a1e38 100%
+  ) !important;
+
+  color: #ffffff !important;
+}
+
+/* グリッドテクスチャ（装飾） */
+.siaorb-fv__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.siaorb-fv__bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ラジアルグロー（中央に淡いアクセント光） */
+.siaorb-fv__bg::after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(ellipse at center, rgba(25, 100, 200, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* FV コンテンツ */
+.siaorb-fv__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  padding: 120px 32px 160px;
+  text-align: center;
   margin: 0 auto;
-  padding: 80px 24px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: center;
 }
 
-.siaorb-mv__lead {
-  font-size: 0.85rem;
-  letter-spacing: 0.15em;
-  color: var(--siaorb-highlight);
+.siaorb-fv__eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
   font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.siaorb-mv__title {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  font-weight: 900;
-  line-height: 1.4;
+  letter-spacing: 0.3em;
+  color: #5b9bd5 !important;   /* 青みがかったテキスト：白背景でも十分なコントラスト */
+  text-transform: uppercase;
   margin-bottom: 24px;
-  color: #fff;
+  padding: 6px 16px;
+  border: 1px solid rgba(91, 155, 213, 0.4);
+  border-radius: 2px;
 }
 
-.siaorb-mv__desc {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 40px;
+.siaorb-fv__title {
+  font-size: clamp(2rem, 5vw, 3.5rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.35 !important;
+  color: #ffffff !important;
+  margin-bottom: 28px !important;
+  letter-spacing: -0.01em;
 }
 
-.siaorb-mv__actions {
+.siaorb-fv__desc {
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem) !important;
+  line-height: 1.9 !important;
+  color: rgba(200, 220, 240, 0.9) !important;  /* 白に近い薄青 */
+  margin-bottom: 48px !important;
+}
+
+.siaorb-fv__actions {
   display: flex;
-  gap: 16px;
+  justify-content: center;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
-.siaorb-mv__btn {
+.siaorb-fv__btn {
   display: inline-block;
-  padding: 14px 32px;
-  border-radius: 4px;
+  padding: 16px 40px;
+  border-radius: 3px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  text-decoration: none !important;
+  transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.siaorb-fv__btn--primary {
+  background-color: var(--siaorb-accent-cyan) !important;
+  color: #0d1b2a !important;
+  box-shadow: 0 4px 24px rgba(104, 212, 224, 0.4);
+}
+
+.siaorb-fv__btn--primary:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(104, 212, 224, 0.5);
+}
+
+.siaorb-fv__btn--secondary {
+  border: 2px solid var(--siaorb-accent-cyan) !important;
+  color: var(--siaorb-accent-cyan) !important;
+  background: transparent !important;
+}
+
+.siaorb-fv__btn--secondary:hover {
+  background: rgba(104, 212, 224, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+/* FV 左上ロゴ */
+.siaorb-fv__logo {
+  position: absolute;
+  top: 32px;
+  left: 40px;
+  z-index: 10;
+}
+
+.siaorb-fv__logo img {
+  display: block;
+  width: 150px;   /* PC: 150px */
+  height: auto;
+}
+
+.siaorb-fv__logo-text {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #fff;
   text-decoration: none;
-  transition: opacity 0.2s ease, background-color 0.2s ease;
+  letter-spacing: 0.08em;
 }
 
-.siaorb-mv__btn--primary {
-  background: var(--siaorb-highlight);
-  color: #fff;
+/* スクロールインジケーター */
+.siaorb-fv__scroll {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
-.siaorb-mv__btn--primary:hover {
-  opacity: 0.85;
+.siaorb-fv__scroll-line {
+  display: block;
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+  animation: siaorb-scroll-line 1.8s ease-in-out infinite;
 }
 
-.siaorb-mv__btn--secondary {
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  color: #fff;
-  background: transparent;
+.siaorb-fv__scroll-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
-.siaorb-mv__btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* MV 画像プレースホルダー */
-.siaorb-mv__image-placeholder {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+@keyframes siaorb-scroll-line {
+  0%   { transform: scaleY(1); transform-origin: top; }
+  50%  { transform: scaleY(0.3); transform-origin: top; }
+  51%  { transform: scaleY(0.3); transform-origin: bottom; }
+  100% { transform: scaleY(1); transform-origin: bottom; }
 }
 
 /* --------------------------------------------------------------------------
-   2. 最新記事セクション
+   SWELL デフォルト要素の非表示
+   - #post_slider : ピックアップスライダー
+   - .swl-mv / .p-mainVisual : SWELLのMVブロック（フロントページ）
    -------------------------------------------------------------------------- */
-.siaorb-news {
-  background: var(--siaorb-bg-light);
+#post_slider,
+.home #post_slider,
+.is-front-page #post_slider {
+  display: none !important;
 }
 
-.siaorb-news__list {
+/* --------------------------------------------------------------------------
+   2. 最新記事セクション（FV直下）
+   -------------------------------------------------------------------------- */
+.siaorb-news {
+  /* background は #siaorb-page-bg が担う */
+}
+
+.siaorb-news__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: 28px;
+}
+
+.siaorb-news__item {
+  /* JS により js-animate が付与されてフェードイン */
 }
 
 .siaorb-news__link {
   display: flex;
   flex-direction: column;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  text-decoration: none;
-  color: inherit;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  text-decoration: none !important;
+  color: inherit !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   height: 100%;
 }
 
 .siaorb-news__link:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.11);
 }
 
 .siaorb-news__thumb {
@@ -204,12 +543,18 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.siaorb-news__link:hover .siaorb-news__img {
+  transform: scale(1.04);
 }
 
 .siaorb-news__no-thumb {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--siaorb-accent), var(--siaorb-primary));
+  background: linear-gradient(135deg, #0d1b2a 0%, #0f2744 100%);
 }
 
 .siaorb-news__body {
@@ -222,21 +567,21 @@
 .siaorb-news__meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .siaorb-news__date {
-  font-size: 0.8rem;
-  color: var(--siaorb-text-light);
+  font-size: 0.78rem;
+  color: #999;
 }
 
 .siaorb-news__cat {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  background: var(--siaorb-highlight);
-  color: #fff;
-  padding: 2px 10px;
+  background: var(--siaorb-primary-blue);
+  color: #fff;          /* 文字は白 */
+  padding: 3px 10px;
   border-radius: 2px;
 }
 
@@ -249,78 +594,119 @@
 }
 
 .siaorb-news__excerpt {
-  font-size: 0.85rem;
-  color: var(--siaorb-text-light);
-  line-height: 1.7;
+  font-size: 0.83rem;
+  color: #888;
+  line-height: 1.75;
   flex: 1;
 }
 
 .siaorb-news__empty {
   text-align: center;
-  color: var(--siaorb-text-light);
+  color: #999;
   padding: 40px;
   grid-column: 1 / -1;
 }
 
+.siaorb-section-footer {
+  text-align: center;
+  margin-top: 48px;
+}
+
 /* --------------------------------------------------------------------------
-   3. サービス内容セクション
+   3. サービス内容セクション（写真＋テキスト交互4段）
    -------------------------------------------------------------------------- */
 .siaorb-services {
-  background: var(--siaorb-bg);
+  /* background は #siaorb-page-bg が担う */
 }
 
-.siaorb-services__grid {
+/* 各行: 写真 | テキスト の2カラム */
+.siaorb-services__row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  padding: 72px 0;
+  border-bottom: 1px solid #eaedf2;
 }
 
-.siaorb-services__item {
-  padding: 40px 32px;
-  border: 1px solid #e8eaf0;
-  border-radius: 8px;
-  position: relative;
+.siaorb-services__row:first-of-type {
+  padding-top: 0;
+}
+
+.siaorb-services__row:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+/* 奇数行は写真が左（デフォルト）
+   偶数行は写真が右（--reverse でテキストを先に） */
+.siaorb-services__row--reverse .siaorb-services__body {
+  order: -1;
+}
+
+/* 写真 */
+.siaorb-services__photo {
+  margin: 0;
+  border-radius: 6px;
   overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  aspect-ratio: 4 / 3;
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
-.siaorb-services__item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
+.siaorb-services__photo img {
+  width: 100%;
   height: 100%;
-  background: var(--siaorb-highlight);
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
 }
 
-.siaorb-services__item:hover {
-  border-color: var(--siaorb-highlight);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+.siaorb-services__row:hover .siaorb-services__photo img {
+  transform: scale(1.03);
 }
 
-.siaorb-services__icon {
-  margin-bottom: 20px;
+/* 写真が読み込めない場合のプレースホルダー */
+.siaorb-services__photo-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0d1b2a 0%, #0f2744 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+  text-align: center;
+  padding: 24px;
 }
 
-.siaorb-services__icon-placeholder {
-  font-size: 2.5rem;
+/* テキスト側 */
+.siaorb-services__number {
+  display: block;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #eaedf2;
   line-height: 1;
+  margin-bottom: 12px;
+  letter-spacing: -0.03em;
+  font-family: 'Georgia', serif;
 }
 
 .siaorb-services__name {
-  font-size: 1.1rem;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
   font-weight: 700;
   color: var(--siaorb-primary);
-  margin-bottom: 16px;
   line-height: 1.5;
+  margin-bottom: 20px;
 }
 
 .siaorb-services__desc {
   font-size: 0.9rem;
-  line-height: 1.8;
+  line-height: 1.95;
   color: var(--siaorb-text-light);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .siaorb-services__tags {
@@ -333,49 +719,40 @@
 }
 
 .siaorb-services__tags li {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--siaorb-accent);
-  background: rgba(15, 52, 96, 0.06);
-  padding: 4px 12px;
+  background: var(--siaorb-primary-blue);
+  color: #fff;          /* カテゴリタグと同デザイン */
+  padding: 3px 12px;
   border-radius: 2px;
 }
 
 /* --------------------------------------------------------------------------
-   4. 企業理念・代表挨拶セクション
+   3. 企業理念・代表挨拶セクション
    -------------------------------------------------------------------------- */
-.siaorb-philosophy {
-  background: var(--siaorb-primary);
-  color: #fff;
-}
-
-.siaorb-philosophy .siaorb-section-header__ja {
-  color: #fff;
-}
-
 .siaorb-philosophy__inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  gap: 72px;
   align-items: start;
 }
 
 /* ビジョン */
 .siaorb-philosophy__vision-title,
 .siaorb-philosophy__mission-title {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--siaorb-highlight);
-  margin-bottom: 12px;
+  letter-spacing: 0.3em;
+  color: #5b9bd5;
+  margin-bottom: 14px;
 }
 
 .siaorb-philosophy__mission-title {
-  margin-top: 32px;
+  margin-top: 40px;
 }
 
 .siaorb-philosophy__vision-text {
-  font-size: 1.25rem;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
   font-weight: 700;
   line-height: 1.8;
   color: #fff;
@@ -387,25 +764,25 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .siaorb-philosophy__mission-list li {
   padding-left: 20px;
   position: relative;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: rgba(200, 220, 240, 0.85);
 }
 
 .siaorb-philosophy__mission-list li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 11px;
+  top: 12px;
   width: 8px;
   height: 2px;
-  background: var(--siaorb-highlight);
+  background: #e94560;
 }
 
 /* 代表挨拶 */
@@ -419,34 +796,34 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 3px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.15);
 }
 
 .siaorb-philosophy__greeting-title {
-  font-size: 1rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--siaorb-highlight);
+  letter-spacing: 0.2em;
+  color: #5b9bd5;
   margin-bottom: 16px;
-  letter-spacing: 0.1em;
 }
 
 .siaorb-philosophy__greeting-text p {
   font-size: 0.9rem;
-  line-height: 1.9;
-  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.95;
+  color: rgba(200, 220, 240, 0.85);
   margin-bottom: 16px;
 }
 
 .siaorb-philosophy__greeting-sign {
-  margin-top: 16px;
+  margin-top: 12px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .siaorb-philosophy__greeting-role {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 4px;
 }
 
@@ -457,18 +834,14 @@
 }
 
 /* --------------------------------------------------------------------------
-   5. 会社概要セクション
+   4. 会社概要セクション（philosophy と統合）
    -------------------------------------------------------------------------- */
-.siaorb-company {
-  background: var(--siaorb-bg-light);
-}
 
 .siaorb-company__inner {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
 }
 
-/* 会社概要テーブル（functions.phpのショートコードと対応） */
 .siaorb-company-table {
   width: 100%;
   border-collapse: collapse;
@@ -476,17 +849,17 @@
 
 .siaorb-company-table th,
 .siaorb-company-table td {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e8eaf0;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e4e8f0;
   text-align: left;
   vertical-align: top;
   font-size: 0.9rem;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
 .siaorb-company-table th {
-  width: 30%;
-  color: var(--siaorb-text-light);
+  width: 28%;
+  color: #666;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -503,11 +876,16 @@
   gap: 6px;
 }
 
+.siaorb-company-table a {
+  color: #1a6cb5;
+  text-decoration: underline;
+}
+
 /* --------------------------------------------------------------------------
-   6. お問い合わせフォームセクション
+   5. お問い合わせセクション
    -------------------------------------------------------------------------- */
 .siaorb-contact {
-  background: var(--siaorb-bg);
+  /* background は #siaorb-page-bg が担う */
 }
 
 .siaorb-contact__lead {
@@ -526,13 +904,13 @@
 .siaorb-contact__notice {
   text-align: center;
   padding: 40px;
-  border: 2px dashed #e8eaf0;
-  border-radius: 8px;
+  border: 2px dashed #dde3ee;
+  border-radius: 6px;
   color: var(--siaorb-text-light);
 }
 
 .siaorb-contact__notice a {
-  color: var(--siaorb-highlight);
+  color: #1a6cb5;
 }
 
 /* CF7 スタイル上書き */
@@ -558,18 +936,19 @@
 
 .siaorb-contact__form .wpcf7-form input:focus,
 .siaorb-contact__form .wpcf7-form textarea:focus {
-  border-color: var(--siaorb-accent);
+  border-color: #1a6cb5;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(26, 108, 181, 0.15);
 }
 
 .siaorb-contact__form .wpcf7-form input[type="submit"] {
-  background: var(--siaorb-highlight);
+  background: #e94560;
   color: #fff;
   border: none;
   padding: 16px 48px;
   font-size: 1rem;
   font-weight: 700;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -583,8 +962,8 @@
    -------------------------------------------------------------------------- */
 .js-animate {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
 }
 
 .js-animate.is-visible {
@@ -592,52 +971,474 @@
   transform: translateY(0);
 }
 
-/* スタガー効果（隣の要素を少し遅らせる） */
-.siaorb-news__item:nth-child(2).js-animate,
-.siaorb-services__item:nth-child(2).js-animate,
-.siaorb-services__item:nth-child(4).js-animate {
-  transition-delay: 0.1s;
+/* --------------------------------------------------------------------------
+   記事一覧ページ（home.php）
+   -------------------------------------------------------------------------- */
+
+/* ページヘッダー */
+.siaorb-archive__hero {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background-color: #0d1b2a;
+  background-image: linear-gradient(150deg, #080e1a 0%, #0f2744 100%);
+  padding: 80px 32px;
+  text-align: center;
+  color: #fff;
 }
 
-.siaorb-news__item:nth-child(3).js-animate,
-.siaorb-services__item:nth-child(3).js-animate {
-  transition-delay: 0.2s;
+.siaorb-archive__hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.siaorb-archive__hero-en {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: #5b9bd5;
+  margin-bottom: 12px;
+}
+
+.siaorb-archive__hero-title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 900;
+  color: #fff !important;
+  margin-bottom: 16px;
+}
+
+.siaorb-archive__hero-desc {
+  font-size: 0.9rem;
+  color: rgba(200, 220, 240, 0.8);
+  line-height: 1.8;
+}
+
+/* ボディエリア */
+.siaorb-archive__body {
+  background: #f6f8fb;
+  padding: 64px 0;
+}
+
+.siaorb-archive__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 48px;
+  align-items: start;
+}
+
+/* 記事グリッド */
+.siaorb-archive__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px;
+}
+
+.siaorb-archive__link {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  text-decoration: none !important;
+  color: inherit !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.siaorb-archive__link:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.11);
+}
+
+.siaorb-archive__thumb {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.siaorb-archive__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s ease;
+}
+
+.siaorb-archive__link:hover .siaorb-archive__img {
+  transform: scale(1.04);
+}
+
+.siaorb-archive__no-thumb {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0d1b2a 0%, #0f2744 100%);
+}
+
+.siaorb-archive__body-inner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.siaorb-archive__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.siaorb-archive__date {
+  font-size: 0.78rem;
+  color: #999;
+}
+
+.siaorb-archive__cat {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--siaorb-primary-blue);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+.siaorb-archive__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--siaorb-primary);
+  margin-bottom: 10px;
+}
+
+.siaorb-archive__excerpt {
+  font-size: 0.83rem;
+  color: #888;
+  line-height: 1.75;
+  flex: 1;
+  margin-bottom: 14px;
+}
+
+.siaorb-archive__more {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1a6cb5;
+}
+
+/* ページネーション */
+.siaorb-archive__pagination {
+  margin-top: 48px;
+}
+
+.siaorb-archive__pagination .nav-links {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.siaorb-archive__pagination .page-numbers {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dde3ee;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--siaorb-primary);
+  text-decoration: none;
+  background: #fff;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.siaorb-archive__pagination .page-numbers:hover,
+.siaorb-archive__pagination .page-numbers.current {
+  background: var(--siaorb-primary);
+  color: #fff;
+  border-color: var(--siaorb-primary);
+}
+
+/* 記事なし */
+.siaorb-archive__empty {
+  padding: 60px 32px;
+  text-align: center;
+  color: #888;
+  background: #fff;
+  border-radius: 6px;
+  grid-column: 1 / -1;
+}
+
+.siaorb-archive__empty p {
+  margin-bottom: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   サイドバー（記事一覧ページ）
+   -------------------------------------------------------------------------- */
+.siaorb-archive__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: sticky;
+  top: 80px;
+}
+
+.siaorb-sidebar__widget {
+  background: #fff;
+  border-radius: 6px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.siaorb-sidebar__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--siaorb-primary);
+  padding-bottom: 12px;
+  border-bottom: 2px solid #eaedf2;
+  margin-bottom: 16px;
+}
+
+/* 検索ボックス */
+.siaorb-sidebar__search-inner {
+  display: flex;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.siaorb-sidebar__search-input {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  border: none;
+  outline: none;
+  color: var(--siaorb-text);
+  background: #fff;
+}
+
+.siaorb-sidebar__search-input::placeholder {
+  color: #bbb;
+}
+
+.siaorb-sidebar__search-btn {
+  padding: 0 14px;
+  background: var(--siaorb-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+.siaorb-sidebar__search-btn:hover {
+  opacity: 0.85;
+}
+
+/* カテゴリリスト */
+.siaorb-sidebar__cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.siaorb-sidebar__cat-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 4px;
+  font-size: 0.875rem;
+  color: var(--siaorb-text);
+  text-decoration: none;
+  border-bottom: 1px solid #f0f2f5;
+  transition: color 0.2s;
+}
+
+.siaorb-sidebar__cat-link:hover {
+  color: #1a6cb5;
+}
+
+.siaorb-sidebar__cat-count {
+  font-size: 0.78rem;
+  color: #aaa;
+  font-weight: 700;
+}
+
+/* 月別アーカイブリスト */
+.siaorb-sidebar__archive-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.siaorb-sidebar__archive-item {
+  font-size: 0;
+}
+
+.siaorb-sidebar__archive-item a {
+  display: block;
+  padding: 10px 4px;
+  font-size: 0.875rem;
+  color: var(--siaorb-text);
+  text-decoration: none;
+  border-bottom: 1px solid #f0f2f5;
+  transition: color 0.2s;
+}
+
+.siaorb-sidebar__archive-item a:hover {
+  color: #1a6cb5;
+}
+
+/* --------------------------------------------------------------------------
+   フッターロゴ
+   -------------------------------------------------------------------------- */
+.siaorb-footer-logo {
+  text-align: center;
+  padding: 56px 24px 40px;
+  /* SWELL フッターの背景色に合わせる（コピーライトエリアと統一） */
+  background: #111827;
+  width: 100vw;
+  margin-left:  calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  box-sizing: border-box;
+}
+
+.siaorb-footer-logo img {
+  display: inline-block;
+  width: 190px;   /* 190px 固定 */
+  max-width: 70%;
+  height: auto;
+}
+
+.siaorb-footer-logo__fallback {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--siaorb-primary-blue);
+}
+
+/* --------------------------------------------------------------------------
+   リンク・サイドバー色をブランドカラーに統一
+   -------------------------------------------------------------------------- */
+.siaorb-archive__more,
+.siaorb-sidebar__cat-link:hover,
+.siaorb-sidebar__archive-item a:hover {
+  color: var(--siaorb-primary-blue) !important;
+}
+
+.siaorb-sidebar__search-btn {
+  background: var(--siaorb-primary-blue);
+}
+
+.siaorb-archive__pagination .page-numbers:hover,
+.siaorb-archive__pagination .page-numbers.current {
+  background: var(--siaorb-primary-blue);
+  border-color: var(--siaorb-primary-blue);
+}
+
+/* FV ロゴ・見出し SP */
+@media (max-width: 640px) {
+  .siaorb-fv__logo {
+    top: 20px;
+    left: 5%;
+  }
+  .siaorb-fv__logo img {
+    width: 20vw;    /* SP: 20vw */
+    min-width: 80px;
+  }
 }
 
 /* --------------------------------------------------------------------------
    レスポンシブ
    -------------------------------------------------------------------------- */
-@media (max-width: 900px) {
-  .siaorb-mv__inner {
+@media (max-width: 960px) {
+  .siaorb-services__row {
     grid-template-columns: 1fr;
-    text-align: center;
+    gap: 40px;
   }
 
-  .siaorb-mv__actions {
-    justify-content: center;
+  .siaorb-services__row--reverse .siaorb-services__body {
+    order: 0;
   }
 
-  .siaorb-mv__image {
-    display: none;
-  }
-
-  .siaorb-services__grid {
-    grid-template-columns: 1fr;
+  .siaorb-services__photo {
+    max-width: 480px;
+    width: 100%;
   }
 
   .siaorb-philosophy__inner {
     grid-template-columns: 1fr;
     gap: 48px;
   }
+
+  .siaorb-news__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .siaorb-archive__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .siaorb-archive__sidebar {
+    position: static;
+  }
 }
 
 @media (max-width: 640px) {
+  /* SP: コンテンツ幅 約90%（左右 5% ずつ） */
   .siaorb-section-inner {
-    padding: 56px 16px;
+    padding: 64px 5%;
   }
 
-  .siaorb-news__list {
+  /* SP: 見出し */
+  .siaorb-section-header__title {
+    margin-left: -5vw !important;
+    font-size: clamp(3.5rem, 18vw, 6rem) !important;
+    white-space: nowrap;
+  }
+
+  .siaorb-fv__inner {
+    padding: 100px 5% 120px;
+  }
+
+  .siaorb-archive__hero-inner {
+    padding: 0 5%;
+  }
+
+  .siaorb-archive__inner {
+    padding: 0 5%;
+  }
+
+  .siaorb-fv__scroll {
+    display: none;
+  }
+
+  .siaorb-news__grid {
     grid-template-columns: 1fr;
+  }
+
+  .siaorb-archive__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .siaorb-archive__body {
+    padding: 40px 0;
   }
 
   .siaorb-company-table th,

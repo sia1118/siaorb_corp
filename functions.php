@@ -22,6 +22,20 @@ define( 'SIAORB_CHILD_VERSION', '1.0.0' );
  * ========================================================================== */
 
 /**
+ * Inter フォント（Google Fonts）の読み込み
+ */
+function siaorb_enqueue_fonts() {
+	// Inter（本文・UI用）+ Cormorant Garamond（見出し飾り文字用）
+	wp_enqueue_style(
+		'siaorb-fonts',
+		'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,700&family=Inter:wght@400;500;600;700;900&display=swap',
+		array(),
+		null
+	);
+}
+add_action( 'wp_enqueue_scripts', 'siaorb_enqueue_fonts' );
+
+/**
  * カスタム CSS / JS の読み込み
  */
 function siaorb_enqueue_assets() {
@@ -54,8 +68,28 @@ add_action( 'wp_enqueue_scripts', 'siaorb_enqueue_assets' );
  * SWELL フック
  * ========================================================================== */
 
-// 必要に応じて SWELL のアクション/フィルターフックを追加
-// 例: add_filter( 'swell_xxx', 'siaorb_custom_function' );
+/**
+ * フロントページで SWELL のデフォルト要素を抑制する
+ *
+ * - 「さぁ、始めよう。」= 固定ページのエディタコンテンツ → the_content をクリア
+ * - #post_slider      = SWELLのピックアップスライダー  → フック解除 + CSS で非表示
+ * - SWELL MV          = 管理画面設定のMV               → フック解除
+ */
+function siaorb_suppress_swell_on_front() {
+	if ( ! is_front_page() ) {
+		return;
+	}
+
+	// 固定ページのエディタコンテンツ（「さぁ、始めよう。」等）を空にする
+	add_filter( 'the_content', '__return_empty_string', 99 );
+
+	// SWELL のトップスライダー・MV フックを解除（フック名はSWELLバージョンにより変わる可能性あり）
+	remove_action( 'swell_before_main',         'swell_the_topslider', 10 );
+	remove_action( 'swell_before_main',         'swell_the_mv',        10 );
+	remove_action( 'swell_main_before_content', 'swell_the_topslider', 10 );
+	remove_action( 'swell_main_before_content', 'swell_the_mv',        10 );
+}
+add_action( 'wp', 'siaorb_suppress_swell_on_front' );
 
 /* ==========================================================================
  * ショートコード
@@ -76,30 +110,30 @@ function siaorb_company_info_shortcode() {
 			</tr>
 			<tr>
 				<th>設立</th>
-				<td><!-- TODO: 設立年月を入力 --></td>
+				<td>2023年5月</td>
 			</tr>
 			<tr>
 				<th>代表社員</th>
-				<td><!-- TODO: 代表者名を入力 --></td>
+				<td>白川 翔太</td>
 			</tr>
 			<tr>
 				<th>所在地</th>
-				<td><!-- TODO: 住所を入力 --></td>
+				<td>東京都北区田端6-6-16-201</td>
 			</tr>
 			<tr>
 				<th>URL</th>
-				<td><a href="https://siaorb.co.jp" target="_blank" rel="noopener noreferrer">https://siaorb.co.jp</a></td>
+				<td><a href="https://siaorb.com" target="_blank" rel="noopener noreferrer">https://siaorb.com</a></td>
 			</tr>
 			<tr>
 				<th>メール</th>
-				<td><a href="mailto:info@siaorb.co.jp">info@siaorb.co.jp</a></td>
+				<td><a href="mailto:info@siaorb.com">info@siaorb.com</a></td>
 			</tr>
 			<tr>
 				<th>事業内容</th>
 				<td>
 					<ul>
 						<li>Web解析業務 / グロースハック</li>
-						<li>Webサイト / システム開発 / アプリ開発ディレクション・PM業務</li>
+						<li>Webサイト制作 / システム開発 / アプリ開発</li>
 						<li>ウェブ解析士認定講座 / 上級ウェブ解析士講座の開講</li>
 						<li>ウェブディレクタースキル開発・コーチング事業</li>
 					</ul>
@@ -123,13 +157,83 @@ function siaorb_contact_placeholder_shortcode() {
 	<div class="siaorb-contact__notice">
 		<p>お問い合わせフォームを準備中です。</p>
 		<p>お急ぎの方はメールにてご連絡ください：
-			<a href="mailto:info@siaorb.co.jp">info@siaorb.co.jp</a>
+			<a href="mailto:info@siaorb.com">info@siaorb.com</a>
 		</p>
 	</div>
 	<?php
 	return ob_get_clean();
 }
 add_shortcode( 'siaorb_contact_placeholder', 'siaorb_contact_placeholder_shortcode' );
+
+/* ==========================================================================
+ * SWELL フロントページ最適化
+ * ========================================================================== */
+
+/**
+ * フロントページでヘッダー（#header）を非表示にする
+ */
+function siaorb_hide_header_on_front() {
+	if ( ! is_front_page() ) {
+		return;
+	}
+	// ヘッダー非表示 + フッター背景色統一（コピーライトエリアと揃える）
+	echo '<style>' .
+		'#header,.l-header,.p-header{display:none!important;}' .
+		'.l-footer,.p-footer,.c-footer,footer{background:#111827!important;}' .
+		'.l-footer__copyright,.p-copyright,.c-copyright,.l-copyright{background:#111827!important;color:rgba(255,255,255,0.45)!important;}' .
+	'</style>' . "\n";
+}
+add_action( 'wp_head', 'siaorb_hide_header_on_front', 99 );
+
+/**
+ * フッター直前にロゴを出力する
+ * swell_before_footer と get_footer の両方に登録し、
+ * static フラグで1回のみ出力（SWELL バージョン差異に対応）
+ */
+function siaorb_footer_logo() {
+	static $shown = false;
+	if ( $shown ) return;
+	$shown = true;
+
+	$logo_path = get_stylesheet_directory() . '/assets/images/siaorb_logo_default.svg';
+	$logo_url  = get_stylesheet_directory_uri() . '/assets/images/siaorb_logo_default.svg';
+	?>
+	<div class="siaorb-footer-logo">
+		<?php if ( file_exists( $logo_path ) ) : ?>
+			<img src="<?php echo esc_url( $logo_url ); ?>" alt="合同会社SIAORB" width="500" height="auto" loading="lazy">
+		<?php else : ?>
+			<span class="siaorb-footer-logo__fallback">SIAORB</span>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+add_action( 'swell_before_footer', 'siaorb_footer_logo', 5 );
+add_action( 'get_footer',          'siaorb_footer_logo', 5 );
+
+/**
+ * フロントページではサイドバーを非表示にする
+ * SWELL の is_active_sidebar チェックを無効化
+ */
+function siaorb_disable_sidebar_on_front( $active ) {
+	if ( is_front_page() ) {
+		return false;
+	}
+	return $active;
+}
+add_filter( 'is_active_sidebar', 'siaorb_disable_sidebar_on_front' );
+
+/**
+ * フロントページのボディクラスにカスタムクラスを追加
+ */
+function siaorb_body_classes( $classes ) {
+	if ( is_front_page() ) {
+		$classes[] = 'siaorb-is-front';
+		// SWELL のサイドバーレイアウトを無効化するクラスを追加
+		$classes[] = 'is-layout-one-column';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'siaorb_body_classes' );
 
 /* ==========================================================================
  * ユーティリティ
