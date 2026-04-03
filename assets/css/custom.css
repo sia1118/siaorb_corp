@@ -1,0 +1,653 @@
+/* ==========================================================================
+   SIAORB Corporate - カスタムCSS
+   セクション別スタイル定義
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   共通セクション
+   -------------------------------------------------------------------------- */
+.siaorb-section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.siaorb-section-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.siaorb-section-header__en {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--siaorb-highlight);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.siaorb-section-header__ja {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--siaorb-primary);
+  margin: 0;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 16px;
+}
+
+.siaorb-section-header__ja::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--siaorb-highlight);
+  border-radius: 2px;
+}
+
+.siaorb-section-footer {
+  text-align: center;
+  margin-top: 48px;
+}
+
+/* 共通ボタン */
+.siaorb-btn {
+  display: inline-block;
+  padding: 14px 40px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.siaorb-btn--outline {
+  border: 2px solid var(--siaorb-primary);
+  color: var(--siaorb-primary);
+  background: transparent;
+}
+
+.siaorb-btn--outline:hover {
+  background: var(--siaorb-primary);
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   1. MV（メインビジュアル）
+   -------------------------------------------------------------------------- */
+.siaorb-mv {
+  background: linear-gradient(135deg, var(--siaorb-primary) 0%, var(--siaorb-accent) 100%);
+  color: #fff;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+}
+
+.siaorb-mv__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.siaorb-mv__lead {
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: var(--siaorb-highlight);
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.siaorb-mv__title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  line-height: 1.4;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.siaorb-mv__desc {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 40px;
+}
+
+.siaorb-mv__actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.siaorb-mv__btn {
+  display: inline-block;
+  padding: 14px 32px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.siaorb-mv__btn--primary {
+  background: var(--siaorb-highlight);
+  color: #fff;
+}
+
+.siaorb-mv__btn--primary:hover {
+  opacity: 0.85;
+}
+
+.siaorb-mv__btn--secondary {
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: #fff;
+  background: transparent;
+}
+
+.siaorb-mv__btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* MV 画像プレースホルダー */
+.siaorb-mv__image-placeholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   2. 最新記事セクション
+   -------------------------------------------------------------------------- */
+.siaorb-news {
+  background: var(--siaorb-bg-light);
+}
+
+.siaorb-news__list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.siaorb-news__link {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.siaorb-news__link:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.siaorb-news__thumb {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.siaorb-news__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.siaorb-news__no-thumb {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--siaorb-accent), var(--siaorb-primary));
+}
+
+.siaorb-news__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.siaorb-news__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.siaorb-news__date {
+  font-size: 0.8rem;
+  color: var(--siaorb-text-light);
+}
+
+.siaorb-news__cat {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--siaorb-highlight);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 2px;
+}
+
+.siaorb-news__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--siaorb-primary);
+  margin-bottom: 10px;
+}
+
+.siaorb-news__excerpt {
+  font-size: 0.85rem;
+  color: var(--siaorb-text-light);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.siaorb-news__empty {
+  text-align: center;
+  color: var(--siaorb-text-light);
+  padding: 40px;
+  grid-column: 1 / -1;
+}
+
+/* --------------------------------------------------------------------------
+   3. サービス内容セクション
+   -------------------------------------------------------------------------- */
+.siaorb-services {
+  background: var(--siaorb-bg);
+}
+
+.siaorb-services__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+.siaorb-services__item {
+  padding: 40px 32px;
+  border: 1px solid #e8eaf0;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.siaorb-services__item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--siaorb-highlight);
+}
+
+.siaorb-services__item:hover {
+  border-color: var(--siaorb-highlight);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.siaorb-services__icon {
+  margin-bottom: 20px;
+}
+
+.siaorb-services__icon-placeholder {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.siaorb-services__name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--siaorb-primary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.siaorb-services__desc {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--siaorb-text-light);
+  margin-bottom: 20px;
+}
+
+.siaorb-services__tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.siaorb-services__tags li {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--siaorb-accent);
+  background: rgba(15, 52, 96, 0.06);
+  padding: 4px 12px;
+  border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   4. 企業理念・代表挨拶セクション
+   -------------------------------------------------------------------------- */
+.siaorb-philosophy {
+  background: var(--siaorb-primary);
+  color: #fff;
+}
+
+.siaorb-philosophy .siaorb-section-header__ja {
+  color: #fff;
+}
+
+.siaorb-philosophy__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+/* ビジョン */
+.siaorb-philosophy__vision-title,
+.siaorb-philosophy__mission-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--siaorb-highlight);
+  margin-bottom: 12px;
+}
+
+.siaorb-philosophy__mission-title {
+  margin-top: 32px;
+}
+
+.siaorb-philosophy__vision-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.8;
+  color: #fff;
+}
+
+.siaorb-philosophy__mission-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.siaorb-philosophy__mission-list li {
+  padding-left: 20px;
+  position: relative;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.siaorb-philosophy__mission-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 8px;
+  height: 2px;
+  background: var(--siaorb-highlight);
+}
+
+/* 代表挨拶 */
+.siaorb-philosophy__greeting {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.siaorb-philosophy__greeting-photo-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.siaorb-philosophy__greeting-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--siaorb-highlight);
+  margin-bottom: 16px;
+  letter-spacing: 0.1em;
+}
+
+.siaorb-philosophy__greeting-text p {
+  font-size: 0.9rem;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 16px;
+}
+
+.siaorb-philosophy__greeting-sign {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.siaorb-philosophy__greeting-role {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 4px;
+}
+
+.siaorb-philosophy__greeting-name-ja {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   5. 会社概要セクション
+   -------------------------------------------------------------------------- */
+.siaorb-company {
+  background: var(--siaorb-bg-light);
+}
+
+.siaorb-company__inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* 会社概要テーブル（functions.phpのショートコードと対応） */
+.siaorb-company-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.siaorb-company-table th,
+.siaorb-company-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8eaf0;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.siaorb-company-table th {
+  width: 30%;
+  color: var(--siaorb-text-light);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.siaorb-company-table td {
+  color: var(--siaorb-text);
+}
+
+.siaorb-company-table td ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   6. お問い合わせフォームセクション
+   -------------------------------------------------------------------------- */
+.siaorb-contact {
+  background: var(--siaorb-bg);
+}
+
+.siaorb-contact__lead {
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: var(--siaorb-text-light);
+  margin-bottom: 48px;
+}
+
+.siaorb-contact__form {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.siaorb-contact__notice {
+  text-align: center;
+  padding: 40px;
+  border: 2px dashed #e8eaf0;
+  border-radius: 8px;
+  color: var(--siaorb-text-light);
+}
+
+.siaorb-contact__notice a {
+  color: var(--siaorb-highlight);
+}
+
+/* CF7 スタイル上書き */
+.siaorb-contact__form .wpcf7-form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--siaorb-text);
+  margin-bottom: 6px;
+}
+
+.siaorb-contact__form .wpcf7-form input[type="text"],
+.siaorb-contact__form .wpcf7-form input[type="email"],
+.siaorb-contact__form .wpcf7-form textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d0d5dd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.siaorb-contact__form .wpcf7-form input:focus,
+.siaorb-contact__form .wpcf7-form textarea:focus {
+  border-color: var(--siaorb-accent);
+  outline: none;
+}
+
+.siaorb-contact__form .wpcf7-form input[type="submit"] {
+  background: var(--siaorb-highlight);
+  color: #fff;
+  border: none;
+  padding: 16px 48px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.siaorb-contact__form .wpcf7-form input[type="submit"]:hover {
+  opacity: 0.85;
+}
+
+/* --------------------------------------------------------------------------
+   スクロールアニメーション（custom.js と連動）
+   -------------------------------------------------------------------------- */
+.js-animate {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.js-animate.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* スタガー効果（隣の要素を少し遅らせる） */
+.siaorb-news__item:nth-child(2).js-animate,
+.siaorb-services__item:nth-child(2).js-animate,
+.siaorb-services__item:nth-child(4).js-animate {
+  transition-delay: 0.1s;
+}
+
+.siaorb-news__item:nth-child(3).js-animate,
+.siaorb-services__item:nth-child(3).js-animate {
+  transition-delay: 0.2s;
+}
+
+/* --------------------------------------------------------------------------
+   レスポンシブ
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .siaorb-mv__inner {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .siaorb-mv__actions {
+    justify-content: center;
+  }
+
+  .siaorb-mv__image {
+    display: none;
+  }
+
+  .siaorb-services__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .siaorb-philosophy__inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .siaorb-section-inner {
+    padding: 56px 16px;
+  }
+
+  .siaorb-news__list {
+    grid-template-columns: 1fr;
+  }
+
+  .siaorb-company-table th,
+  .siaorb-company-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .siaorb-company-table th {
+    border-bottom: none;
+    padding-bottom: 4px;
+  }
+}
