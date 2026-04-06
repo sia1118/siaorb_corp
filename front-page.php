@@ -308,12 +308,12 @@ wp_reset_postdata();
 		</div>
 		<p class="siaorb-contact__lead">
 			サービスに関するご質問・ご相談はお気軽にお問い合わせください。<br>
-			通常2〜3営業日以内にご返信いたします。
+			通常1営業日以内にご返信いたします。
 		</p>
 		<div class="siaorb-contact__form">
 			<?php
 			if ( function_exists( 'wpcf7' ) ) :
-				echo do_shortcode( '[contact-form-7 id="YOUR_FORM_ID" title="お問い合わせ"]' );
+				echo do_shortcode( '[contact-form-7 id="3df22ad" title="お問い合わせ"]' );
 			else :
 				?>
 				<div class="siaorb-contact__notice">

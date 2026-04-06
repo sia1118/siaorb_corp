@@ -131,34 +131,39 @@
       if (points.length < 2) { requestAnimationFrame(draw); return; }
 
       ctx.save();
-      ctx.lineCap  = 'round';
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 3.5; // 均一な太さ（マーカー感）
+      ctx.lineCap    = 'round';
+      ctx.lineJoin   = 'round';
+      ctx.lineWidth  = 3.5;
+      ctx.shadowBlur = 0;
+
+      // rgba() ではなく rgb() + globalAlpha でフェード。
+      // globalAlpha はパス全体をオフスクリーンで描いてから合成するため
+      // ラウンドキャップの重なりで alpha が加算されるクレヨン現象が起きない。
+      ctx.strokeStyle = 'rgb(' + COLOR + ')';
 
       var total = points.length;
-      var CHUNKS = 7; // 末尾→先頭の段階的フェード
+      // 3 区間のみ。区間数を減らすほど境界の段差も減る。
+      var cuts   = [0, Math.floor(total * 0.40), Math.floor(total * 0.75), total - 1];
+      var alphas = [0.10, 0.42, 0.78];
 
-      for (var c = 0; c < CHUNKS; c++) {
-        var i0 = Math.floor(c / CHUNKS * total);
-        var i1 = Math.min(Math.floor((c + 1) / CHUNKS * total), total - 1);
+      for (var s = 0; s < 3; s++) {
+        var i0 = cuts[s], i1 = cuts[s + 1];
         if (i0 >= i1) continue;
-
-        var alpha = 0.06 + (c / (CHUNKS - 1)) * 0.64; // 0.06 → 0.70
-
-        // 先頭チャンクにだけグロー
-        if (c === CHUNKS - 1) {
-          ctx.shadowBlur  = 10;
-          ctx.shadowColor = 'rgba(' + COLOR + ', 0.45)';
-        } else {
-          ctx.shadowBlur = 0;
-        }
-        ctx.strokeStyle = 'rgba(' + COLOR + ',' + alpha.toFixed(3) + ')';
-
+        ctx.globalAlpha = alphas[s];
         ctx.beginPath();
         buildPath(points, i0, i1);
         ctx.stroke();
       }
 
+      // 先端だけ軽くグロー（1パスで描くので重なり汚染なし）
+      ctx.globalAlpha  = 1.0;
+      ctx.shadowBlur   = 8;
+      ctx.shadowColor  = 'rgba(' + COLOR + ', 0.5)';
+      ctx.beginPath();
+      buildPath(points, cuts[2], cuts[3]);
+      ctx.stroke();
+
+      ctx.globalAlpha = 1.0;
       ctx.restore();
       requestAnimationFrame(draw);
     }

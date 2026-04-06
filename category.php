@@ -1,15 +1,16 @@
 <?php
 /**
- * 記事一覧ページ テンプレート (home.php)
+ * カテゴリアーカイブ テンプレート (category.php)
  *
- * WordPressの「設定 → 表示設定 → 投稿ページ」で指定した
- * 固定ページに適用されるテンプレート。
- * 記事グリッド・検索・カテゴリアーカイブを表示する。
+ * /blog/category/{slug}/ に適用。
+ * home.php と同じデザインでカテゴリ絞り込み一覧を表示する。
  *
  * @package SWELL_CHILD_SIAORB
  */
 
 get_header();
+
+$cat = get_queried_object();
 ?>
 
 <div class="siaorb-archive">
@@ -17,18 +18,17 @@ get_header();
 	<!-- ページヘッダー -->
 	<div class="siaorb-archive__hero">
 		<div class="siaorb-archive__hero-inner">
-			<span class="siaorb-archive__hero-en">COLUMN / NEWS</span>
-			<h1 class="siaorb-archive__hero-title">記事一覧</h1>
-			<p class="siaorb-archive__hero-desc">
-				デジタルマーケティング・Web解析に関するコラムやお知らせを発信しています。
-			</p>
+			<span class="siaorb-archive__hero-en">CATEGORY</span>
+			<h1 class="siaorb-archive__hero-title"><?php echo esc_html( $cat->name ); ?></h1>
+			<?php if ( $cat->description ) : ?>
+				<p class="siaorb-archive__hero-desc"><?php echo esc_html( $cat->description ); ?></p>
+			<?php endif; ?>
 		</div>
 	</div>
 
 	<div class="siaorb-archive__body">
 		<div class="siaorb-archive__inner">
 
-			<!-- メインコンテンツ（記事グリッド） -->
 			<main class="siaorb-archive__main" id="main" role="main">
 
 				<?php if ( have_posts() ) : ?>
@@ -88,9 +88,9 @@ get_header();
 				<?php else : ?>
 
 					<div class="siaorb-archive__empty">
-						<p>記事が見つかりませんでした。</p>
-						<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="siaorb-btn siaorb-btn--outline">
-							トップページへ戻る
+						<p>この カテゴリの記事が見つかりませんでした。</p>
+						<a href="<?php echo esc_url( home_url( '/blog/' ) ); ?>" class="siaorb-btn siaorb-btn--outline">
+							記事一覧へ戻る
 						</a>
 					</div>
 
@@ -105,11 +105,11 @@ get_header();
 				<div class="siaorb-sidebar__widget">
 					<h3 class="siaorb-sidebar__title">記事を検索</h3>
 					<form class="siaorb-sidebar__search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-						<label class="screen-reader-text" for="siaorb-search-input">キーワードで検索:</label>
+						<label class="screen-reader-text" for="siaorb-cat-search-input">キーワードで検索:</label>
 						<div class="siaorb-sidebar__search-inner">
 							<input
 								type="search"
-								id="siaorb-search-input"
+								id="siaorb-cat-search-input"
 								class="siaorb-sidebar__search-input"
 								placeholder="キーワードを入力..."
 								value="<?php echo esc_attr( get_search_query() ); ?>"
@@ -170,5 +170,4 @@ get_header();
 	</div>
 </div>
 
-<?php
-get_footer();
+<?php get_footer(); ?>

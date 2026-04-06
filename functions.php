@@ -176,39 +176,14 @@ function siaorb_hide_header_on_front() {
 	if ( ! is_front_page() ) {
 		return;
 	}
-	// ヘッダー非表示 + フッター背景色統一（コピーライトエリアと揃える）
+	// ヘッダー非表示
 	echo '<style>' .
 		'#header,.l-header,.p-header{display:none!important;}' .
-		'.l-footer,.p-footer,.c-footer,footer{background:#111827!important;}' .
-		'.l-footer__copyright,.p-copyright,.c-copyright,.l-copyright{background:#111827!important;color:rgba(255,255,255,0.45)!important;}' .
 	'</style>' . "\n";
 }
 add_action( 'wp_head', 'siaorb_hide_header_on_front', 99 );
 
-/**
- * フッター直前にロゴを出力する
- * swell_before_footer と get_footer の両方に登録し、
- * static フラグで1回のみ出力（SWELL バージョン差異に対応）
- */
-function siaorb_footer_logo() {
-	static $shown = false;
-	if ( $shown ) return;
-	$shown = true;
-
-	$logo_path = get_stylesheet_directory() . '/assets/images/siaorb_logo_default.svg';
-	$logo_url  = get_stylesheet_directory_uri() . '/assets/images/siaorb_logo_default.svg';
-	?>
-	<div class="siaorb-footer-logo">
-		<?php if ( file_exists( $logo_path ) ) : ?>
-			<img src="<?php echo esc_url( $logo_url ); ?>" alt="合同会社SIAORB" width="500" height="auto" loading="lazy">
-		<?php else : ?>
-			<span class="siaorb-footer-logo__fallback">SIAORB</span>
-		<?php endif; ?>
-	</div>
-	<?php
-}
-add_action( 'swell_before_footer', 'siaorb_footer_logo', 5 );
-add_action( 'get_footer',          'siaorb_footer_logo', 5 );
+/* フッターロゴは削除 */
 
 /**
  * フロントページではサイドバーを非表示にする
