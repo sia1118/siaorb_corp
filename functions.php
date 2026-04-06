@@ -211,5 +211,20 @@ function siaorb_body_classes( $classes ) {
 add_filter( 'body_class', 'siaorb_body_classes' );
 
 /* ==========================================================================
+ * ファビコン
+ * ========================================================================== */
+
+/**
+ * 子テーマの assets/images/favicon.ico をファビコンとして出力する
+ */
+function siaorb_favicon() {
+	$favicon_url = get_stylesheet_directory_uri() . '/assets/images/favicon.ico';
+	echo '<link rel="icon" href="' . esc_url( $favicon_url ) . '" type="image/x-icon">' . "\n";
+	echo '<link rel="shortcut icon" href="' . esc_url( $favicon_url ) . '" type="image/x-icon">' . "\n";
+}
+add_action( 'wp_head', 'siaorb_favicon', 1 );
+add_action( 'admin_head', 'siaorb_favicon', 1 );
+
+/* ==========================================================================
  * ユーティリティ
  * ========================================================================== */
