@@ -1,456 +1,354 @@
 /**
- * SIAORB Corporate - カスタム JavaScript
+ * SIAORB Corporate — custom.js
+ *
+ * やること:
+ *   1. アンカーリンクのスクロール（固定ナビの高さ分を差し引く）
+ *   2. 固定背景の粒子（canvas）
+ *   3. 欧文をスクランブルさせてから確定させる（data-scramble）
+ *   4. 画面に入った要素に .is-in を付ける（data-reveal / data-scramble）
+ *      + 保険: 一定時間後、画面内にあるのに未表示の要素を必ず出す
+ *   5. スクロールに合わせて動かす
+ *      - --pp : ページ全体の進み具合（固定背景の環の回転）
+ *      - --s  : ヒーローの進み具合（ロゴの傾きと地の沈み込み）
+ *      - --p  : 各要素の位置（写真とテキストの左右の流れ）
+ *   6. ナビの罫と、追従の相談ボタンの出し入れ
+ *
+ * 演出の初期状態（透明・ずらし）は html.sia-js が付いたときだけ効くので、
+ * JS が動かない環境では素のまま全部表示される。
+ * reduced-motion の環境では粒子も動かさず、演出も付けない。
  */
 (function () {
   'use strict';
 
-  /* ============================================================
-     スムーススクロール
-     ============================================================ */
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        var id = this.getAttribute('href');
-        if (id === '#') return;
-        var target = document.querySelector(id);
-        if (!target) return;
-        e.preventDefault();
-        var header = document.querySelector('#header, .l-header, header');
-        var offset = header ? header.offsetHeight : 0;
-        window.scrollTo({
-          top:      target.getBoundingClientRect().top + window.pageYOffset - offset,
-          behavior: 'smooth',
-        });
-      });
-    });
-  });
+  var root = document.documentElement;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!reduce) root.classList.add('sia-js');
 
   /* ============================================================
-     スクロールアニメーション
+     固定背景の粒子
+     セクションの隙間からしか見えないので、数も速度も控えめにする。
+     光らせない（shadowBlur を使わない）ことで、SF ではなく
+     データの散布図に近い見え方にしている。
      ============================================================ */
-  document.addEventListener('DOMContentLoaded', function () {
-    if (!('IntersectionObserver' in window)) return;
-    var obs = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('is-visible'); obs.unobserve(e.target); }
-      });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(
-      '.siaorb-news__item, .siaorb-services__row, .siaorb-philosophy__vision, .siaorb-philosophy__greeting'
-    ).forEach(function (el) { el.classList.add('js-animate'); obs.observe(el); });
-  });
+  function initDots() {
+    var canvas = document.getElementById('sia-bg-dots');
+    if (!canvas || !canvas.getContext) return;
 
-  /* ============================================================
-     セクション背景色 + Services/Philosophy カラーテーマ切り替え
-     ============================================================ */
-  document.addEventListener('DOMContentLoaded', function () {
-    // 背景色マップ（philosophy は company に統合）
-    var BG_MAP = {
-      'fv':       '#080e1a',
-      'news':     '#f0f3f8',
-      'services': '#0d1b2a',
-      'company':  '#0d1b2a',  // デフォルトはネイビー、スクロールで白に
-      'contact':  '#ffffff',
-    };
-
-    var sections = Object.keys(BG_MAP).map(function (id) {
-      return { el: document.getElementById(id), color: BG_MAP[id] };
-    }).filter(function (s) { return s.el; });
-
-    if (!sections.length) return;
-    document.body.style.backgroundColor = BG_MAP['fv'];
-
-    // Services: スクロールでネイビー（is-dark）
-    // Company:  デフォルトネイビー、スクロールで白（is-light）
-    var bgObs = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        var id = entry.target.id;
-        if (entry.isIntersecting) {
-          if (BG_MAP[id]) document.body.style.backgroundColor = BG_MAP[id];
-          if (id === 'services') entry.target.classList.add('is-dark');
-          if (id === 'company')  entry.target.classList.add('is-light');
-        } else {
-          if (id === 'services') entry.target.classList.remove('is-dark');
-          if (id === 'company')  entry.target.classList.remove('is-light');
-        }
-      });
-    }, { rootMargin: '0px 0px -40% 0px', threshold: 0 });
-
-    sections.forEach(function (s) { bgObs.observe(s.el); });
-  });
-
-  /* ============================================================
-     マウストレイル（ベジェ曲線 + グロー）
-     ============================================================ */
-  (function initMouseTrail() {
-    if (window.matchMedia('(hover: none)').matches) return;
-
-    var canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
-    document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
+    var dots = [];
+    var w = 0, h = 0, dpr = 1;
+    var running = false;
+    var scrollShift = 0;
 
-    var points  = [];
-    var LIFE    = 700;
-    var COLOR   = '104,212,224';
-    var MAX_PTS = 100;
-    var smoothX = null, smoothY = null;
-    var SMOOTH  = 0.25; // 強めにスムーズにして手ぶれを減らす
+    var TONES = [
+      '104, 212, 224', // ロゴのシアン
+      '120, 150, 255', // 明るい青
+      '255, 255, 255', // 白
+    ];
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    resize();
-    window.addEventListener('resize', resize);
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width  = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      build();
+    }
 
-    document.addEventListener('mousemove', function (e) {
-      if (smoothX === null) { smoothX = e.clientX; smoothY = e.clientY; }
-      smoothX += SMOOTH * (e.clientX - smoothX);
-      smoothY += SMOOTH * (e.clientY - smoothY);
-      points.push({ x: smoothX, y: smoothY, t: Date.now() });
-      if (points.length > MAX_PTS) points.shift();
-    });
-
-    // なめらかな quadratic bezier パスを建構するヘルパー
-    function buildPath(pts, from, to) {
-      if (from >= pts.length || to < from + 1) return;
-      ctx.moveTo(pts[from].x, pts[from].y);
-      for (var i = from + 1; i <= to; i++) {
-        if (i < pts.length - 1) {
-          var mx = (pts[i].x + pts[i + 1].x) / 2;
-          var my = (pts[i].y + pts[i + 1].y) / 2;
-          ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-        } else {
-          ctx.lineTo(pts[i].x, pts[i].y);
-        }
+    function build() {
+      var count = Math.max(60, Math.min(190, Math.round((w * h) / 8600)));
+      dots = [];
+      for (var i = 0; i < count; i++) {
+        var big = Math.random() > 0.88;
+        dots.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: big ? 1.7 + Math.random() * 1.1 : 0.6 + Math.random() * 0.9,
+          a: big ? 0.55 + Math.random() * 0.35 : 0.18 + Math.random() * 0.4,
+          vx: (Math.random() - 0.5) * 0.11,
+          vy: -0.05 - Math.random() * 0.13,
+          tone: TONES[Math.random() < 0.5 ? 0 : (Math.random() < 0.6 ? 1 : 2)],
+        });
       }
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      var now = Date.now();
-      while (points.length > 0 && now - points[0].t > LIFE) points.shift();
-      if (points.length < 2) { requestAnimationFrame(draw); return; }
+      if (!running) return;
+      ctx.clearRect(0, 0, w, h);
 
-      ctx.save();
-      ctx.lineCap    = 'round';
-      ctx.lineJoin   = 'round';
-      ctx.lineWidth  = 3.5;
-      ctx.shadowBlur = 0;
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        d.x += d.vx;
+        d.y += d.vy;
 
-      // rgba() ではなく rgb() + globalAlpha でフェード。
-      // globalAlpha はパス全体をオフスクリーンで描いてから合成するため
-      // ラウンドキャップの重なりで alpha が加算されるクレヨン現象が起きない。
-      ctx.strokeStyle = 'rgb(' + COLOR + ')';
+        if (d.y < -4) { d.y = h + 4; d.x = Math.random() * w; }
+        if (d.x < -4) d.x = w + 4;
+        if (d.x > w + 4) d.x = -4;
 
-      var total = points.length;
-      // 3 区間のみ。区間数を減らすほど境界の段差も減る。
-      var cuts   = [0, Math.floor(total * 0.40), Math.floor(total * 0.75), total - 1];
-      var alphas = [0.10, 0.42, 0.78];
+        // 固定背景なので、スクロール量をわずかに足して奥行きを出す
+        var y = d.y + scrollShift;
+        if (y > h + 4) y -= h + 8;
+        if (y < -4) y += h + 8;
 
-      for (var s = 0; s < 3; s++) {
-        var i0 = cuts[s], i1 = cuts[s + 1];
-        if (i0 >= i1) continue;
-        ctx.globalAlpha = alphas[s];
         ctx.beginPath();
-        buildPath(points, i0, i1);
-        ctx.stroke();
+        ctx.arc(d.x, y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + d.tone + ',' + d.a.toFixed(3) + ')';
+        ctx.fill();
       }
 
-      // 先端だけ軽くグロー（1パスで描くので重なり汚染なし）
-      ctx.globalAlpha  = 1.0;
-      ctx.shadowBlur   = 8;
-      ctx.shadowColor  = 'rgba(' + COLOR + ', 0.5)';
-      ctx.beginPath();
-      buildPath(points, cuts[2], cuts[3]);
-      ctx.stroke();
-
-      ctx.globalAlpha = 1.0;
-      ctx.restore();
-      requestAnimationFrame(draw);
+      window.requestAnimationFrame(draw);
     }
-    draw();
-  })();
 
-  /* ============================================================
-     FV: 球体（輪郭明確 + 内部波型曲線）+ パーティクル
-     ============================================================ */
-  document.addEventListener('DOMContentLoaded', function () {
-    var fvBg = document.querySelector('.siaorb-fv__bg');
-    if (!fvBg) return;
-
-    var canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-    fvBg.appendChild(canvas);
-    var ctx = canvas.getContext('2d');
-
-    var W, H, cx, cy, R;
-    var mouse = { x: -9999, y: -9999 };
-    var CYAN  = '104,212,224'; // #68d4e0
-    var time  = 0;
-
-    function resize() {
-      W  = canvas.width  = fvBg.offsetWidth  || window.innerWidth;
-      H  = canvas.height = fvBg.offsetHeight || window.innerHeight;
-      // 常に中央
-      cx = W * 0.5;
-      cy = H * 0.5;
-      // PC では大きめ、SP ではコンパクト
-      R  = W > 768 ? Math.min(W, H) * 0.34 : Math.min(W, H) * 0.36;
-      initParticles();
+    function start() {
+      if (running || reduce) return;
+      running = true;
+      window.requestAnimationFrame(draw);
     }
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    // DOMContentLoaded 時点では FV の高さが未確定な場合があるため load でも再初期化
-    window.addEventListener('load', resize);
+
+    function stop() { running = false; }
+
     resize();
+    window.addEventListener('resize', resize);
 
-    /* ----------------------------------------------------------
-       マウスによる微小傾き（穏やかに）
-       ---------------------------------------------------------- */
-    function getInf() {
-      var dx = (mouse.x - cx) / (W || 1);
-      var dy = (mouse.y - cy) / (H || 1);
-      return { rx: dy * 0.25, ry: -dx * 0.25 };
-    }
-
-    /* ----------------------------------------------------------
-       球面座標 → 2D 正射影
-       ---------------------------------------------------------- */
-    function proj(lat, lon, inf) {
-      var cl = Math.cos(lat);
-      var x  = cl * Math.cos(lon);
-      var y  = Math.sin(lat);
-      var z  = cl * Math.sin(lon);
-      // X 軸回転
-      var y2 = y * Math.cos(inf.rx) - z * Math.sin(inf.rx);
-      var z2 = y * Math.sin(inf.rx) + z * Math.cos(inf.rx);
-      // Y 軸回転
-      var x3 = x * Math.cos(inf.ry) + z2 * Math.sin(inf.ry);
-      var z3 =-x * Math.sin(inf.ry) + z2 * Math.cos(inf.ry);
-      return { x: cx + x3 * R, y: cy - y2 * R, z: z3 };
-    }
-
-    /* ----------------------------------------------------------
-       1. 球体輪郭（くっきりした円）
-       ---------------------------------------------------------- */
-    function drawOutline() {
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      // 外側グロー
-      ctx.shadowBlur  = 28;
-      ctx.shadowColor = 'rgba(' + CYAN + ', 0.55)';
-      ctx.strokeStyle = 'rgba(' + CYAN + ', 0.85)';
-      ctx.lineWidth   = 1.8;
-      ctx.stroke();
-      // 2重目（細く薄く）
-      ctx.beginPath();
-      ctx.arc(cx, cy, R + 3, 0, Math.PI * 2);
-      ctx.shadowBlur  = 0;
-      ctx.strokeStyle = 'rgba(' + CYAN + ', 0.18)';
-      ctx.lineWidth   = 0.8;
-      ctx.stroke();
-    }
-
-    /* ----------------------------------------------------------
-       2. クリッピングパス（輪郭内にだけ描画）
-       ---------------------------------------------------------- */
-    function clipToSphere() {
-      ctx.beginPath();
-      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2);
-      ctx.clip();
-    }
-
-    /* ----------------------------------------------------------
-       3. 内部波型曲線（ランダム性を抑えた規則的な流れ）
-          - 曲線本数を減らして整理感を出す
-          - 全て左→右上方向に揃える
-          - 振幅を小さめに抑制
-       ---------------------------------------------------------- */
-    var WAVE_COUNT = 14;
-    var WAVES = [];
-
-    for (var i = 0; i < WAVE_COUNT; i++) {
-      var t = i / WAVE_COUNT;
-      // 疑似ランダム（シード的に i を使って再現性あるバリエーション）
-      var r1 = Math.sin(i * 127.1) * 0.5 + 0.5;
-      var r2 = Math.sin(i * 311.7) * 0.5 + 0.5;
-      var r3 = Math.sin(i * 74.3)  * 0.5 + 0.5;
-      WAVES.push({
-        latBase: -0.75 * Math.PI / 2 + t * 1.5 * Math.PI / 2,
-        amp:     0.08 + r1 * 0.22,          // 0.08〜0.30（大幅に拡大）
-        freq:    1.0 + r2 * 2.8,            // 1.0〜3.8（さらに多様な波数）
-        phase:   r3 * Math.PI * 2,          // 完全ランダムな初期位相
-        speed:   0.005 + r1 * 0.012,        // 0.005〜0.017（速い/遅いが混在）
-        phaseShift: r2 * 0.8,               // 時間とともにフェーズがずれる量
-        alpha:   0.22 + t * 0.28,
-        width:   0.6 + r3 * 1.0,
+    if (reduce) {
+      // 動かさずに一度だけ描く
+      running = true;
+      draw();
+      running = false;
+    } else {
+      start();
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stop(); else start();
       });
     }
 
-    function drawWaves(inf) {
-      var STEPS = 80;
+    return { setShift: function (v) { scrollShift = v; } };
+  }
 
-      WAVES.forEach(function (w) {
-        ctx.beginPath();
+  document.addEventListener('DOMContentLoaded', function () {
+    var nav     = document.getElementById('sia-nav');
+    var badge   = document.getElementById('sia-badge');
+    var hero    = document.getElementById('hero');
+    var contact = document.getElementById('contact');
 
-        for (var s = 0; s <= STEPS; s++) {
-          var frac = s / STEPS;
-          // 経度: 左端(-π)から右端(π) まで一定速度で進む
-          var lon = -Math.PI + frac * 2 * Math.PI;
-          // 緯度: baseに穏やかな正弦波を乗せる（振幅は球半径比）
-          // 2つの正弦波を重ねることで複雑な動きを生成
-          var lat = w.latBase
-                  + Math.sin(frac * Math.PI * w.freq + time * w.speed + w.phase) * w.amp
-                  + Math.sin(frac * Math.PI * (w.freq * 0.5) + time * (w.speed * 0.7) + w.phase + w.phaseShift * time * 0.001) * (w.amp * 0.4);
+    var dots = initDots();
 
-          var p = proj(lat, lon, inf);
+    /* ----------------------------------------------------------
+       1. アンカーリンクのスクロール
+       ---------------------------------------------------------- */
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      var id = a.getAttribute('href');
+      if (!id || id === '#') return;
 
-          // 裏側は薄く
-          var depthA = Math.max(0, (p.z + 1) / 2);
-          // 端は自然に細く
-          var edgeA  = Math.sin(frac * Math.PI);
-          var alpha  = w.alpha * depthA * (0.3 + 0.7 * edgeA);
+      a.addEventListener('click', function (e) {
+        var target = document.querySelector(id);
+        if (!target) return;
+        e.preventDefault();
 
-          if (s === 0) {
-            ctx.moveTo(p.x, p.y);
+        var offset = nav ? nav.offsetHeight : 0;
+        window.scrollTo({
+          top: target.getBoundingClientRect().top + window.pageYOffset - offset,
+          behavior: reduce ? 'auto' : 'smooth',
+        });
+      });
+    });
+
+    if (reduce) return;
+
+    /* ----------------------------------------------------------
+       3. 欧文をスクランブルさせる下ごしらえ
+
+       [data-scramble] の中身を
+         <span class="sia-sr">本来の文字</span>          ← 読み上げ用。目には見えない
+         <span class="sia-scr" aria-hidden="true">…</span> ← 動かす側
+       の2つに分ける。動く側は読み上げから外れるので、
+       途中のランダムな文字列が読み上げられることはない。
+
+       幅は最初に測って固定する。文字が入れ替わっても行が揺れない。
+       ---------------------------------------------------------- */
+    var GLYPHS = 'ABCDEFGHIJKLNOPQRSTUVXYZ0123456789#$%&*+-/<>?@[]^_{}~';
+
+    document.querySelectorAll('[data-scramble]').forEach(function (el) {
+      var text = (el.textContent || '').trim();
+      if (!text) return;
+
+      var sr = document.createElement('span');
+      sr.className = 'sia-sr';
+      sr.textContent = text;
+
+      var scr = document.createElement('span');
+      scr.className = 'sia-scr';
+      scr.setAttribute('aria-hidden', 'true');
+      scr.textContent = text;
+
+      el.textContent = '';
+      el.appendChild(sr);
+      el.appendChild(scr);
+
+      // 幅は span を組んでから測る。要素そのものを測ると
+      // ブロック要素では行の幅（＝親の幅）になってしまう。
+      var w = scr.getBoundingClientRect().width;
+      if (w) scr.style.width = Math.ceil(w) + 'px';
+
+      el.__siaScr = scr;
+      el.__siaText = text;
+    });
+
+    /** 左から順に確定していく。1文字あたり PER ミリ秒ずつ遅らせる。 */
+    function runScramble(el) {
+      var scr = el.__siaScr;
+      var text = el.__siaText;
+      if (!scr || !text || el.__siaDone) return;
+      el.__siaDone = true;
+
+      var len = text.length;
+      var PER = 46;      // 1文字ぶんの遅れ
+      var HOLD = 340;    // 各文字が乱れている時間
+
+      // data-scramble に数値が入っていれば、その ms ぶん長く見せる。
+      // 全体が同じ比率で伸びるので、途中で急に速くなったりしない。
+      var base = (len - 1) * PER + HOLD;
+      var extra = parseInt(el.getAttribute('data-scramble'), 10);
+      if (extra > 0) {
+        var k = (base + extra) / base;
+        PER *= k;
+        HOLD *= k;
+      }
+
+      var total = (len - 1) * PER + HOLD + 60;
+      var start = null;
+
+      function frame(now) {
+        if (start === null) start = now;
+        var t = now - start;
+        var out = '';
+
+        for (var i = 0; i < len; i++) {
+          var ch = text.charAt(i);
+          if (ch === ' ') { out += ' '; continue; }
+          if (t >= i * PER + HOLD) {
+            out += ch;
           } else {
-            ctx.lineTo(p.x, p.y);
+            out += GLYPHS.charAt((Math.random() * GLYPHS.length) | 0);
           }
         }
 
-        ctx.shadowBlur  = 6;
-        ctx.shadowColor = 'rgba(' + CYAN + ',0.25)';
-        ctx.strokeStyle = 'rgba(' + CYAN + ',' + w.alpha.toFixed(3) + ')';
-        ctx.lineWidth   = w.width;
-        ctx.stroke();
-      });
-    }
-
-    /* ----------------------------------------------------------
-       4. 波形リング（球体から外に広がるパルス）
-       ---------------------------------------------------------- */
-    var rings    = [];
-    var lastRing = 0;
-    var RING_INT = 2400;
-    var RING_DUR = 5000;
-    for (var wi = 0; wi < 3; wi++) rings.push({ start: Date.now() - wi * (RING_INT * 0.85) });
-
-    function drawRings() {
-      var now = Date.now();
-      if (now - lastRing > RING_INT) { rings.push({ start: now }); lastRing = now; }
-      rings = rings.filter(function (r) { return now - r.start < RING_DUR; });
-
-      rings.forEach(function (r) {
-        var t    = Math.min((now - r.start) / RING_DUR, 1);
-        var ease = 1 - Math.pow(1 - t, 2);
-        var wR   = R + (Math.max(W, H) * 0.62 - R) * ease;
-        var al   = (1 - t) * (1 - t) * 0.4;
-
-        ctx.shadowBlur = 0;
-        [{ lw: 1.2, a: al }, { lw: 5, a: al * 0.14 }, { lw: 14, a: al * 0.05 }]
-          .forEach(function (ring) {
-            ctx.beginPath();
-            ctx.arc(cx, cy, wR, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(' + CYAN + ',' + ring.a.toFixed(3) + ')';
-            ctx.lineWidth   = ring.lw;
-            ctx.stroke();
-          });
-      });
-    }
-
-    /* ----------------------------------------------------------
-       5. パーティクル（数増 + 視認性向上）
-       ---------------------------------------------------------- */
-    var particles      = [];
-    var PARTICLE_COUNT = 80; // 40 → 80 に増量
-
-    function initParticles() {
-      particles = [];
-      for (var i = 0; i < PARTICLE_COUNT; i++) particles.push(makeParticle(true));
-    }
-
-    function makeParticle(random) {
-      var isPC = W > 768;
-      var tier  = Math.random();
-      var size, alpha, speed;
-      if (tier < 0.55) {         // 小（多め）
-        size  = isPC ? 1.2 + Math.random() * 1.4 : 0.8 + Math.random() * 1.0;
-        alpha = isPC ? 0.35 + Math.random() * 0.3 : 0.15 + Math.random() * 0.25;
-        speed = 0.25 + Math.random() * 0.5;
-      } else if (tier < 0.85) {  // 中
-        size  = isPC ? 2.5 + Math.random() * 2.0 : 1.8 + Math.random() * 1.4;
-        alpha = isPC ? 0.5  + Math.random() * 0.35 : 0.25 + Math.random() * 0.3;
-        speed = 0.15 + Math.random() * 0.35;
-      } else {                   // 大（少ない）
-        size  = isPC ? 4.5 + Math.random() * 3.0 : 3.0 + Math.random() * 2.0;
-        alpha = isPC ? 0.4  + Math.random() * 0.3 : 0.1 + Math.random() * 0.15;
-        speed = 0.1 + Math.random() * 0.2;
-      }
-      return {
-        x:     Math.random() * W,
-        y:     random ? Math.random() * H : H + size + 2,
-        size:  size,
-        speed: speed,
-        alpha: alpha,
-        drift: (Math.random() - 0.5) * 0.5,
-        glow:  tier > 0.55,      // 中・大はグロー付き
-      };
-    }
-
-    function drawParticles() {
-      particles.forEach(function (p, i) {
-        p.y -= p.speed;
-        p.x += p.drift;
-        if (p.y < -p.size - 2) particles[i] = makeParticle(false);
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        if (p.glow) {
-          var glowMult = W > 768 ? 8 : 5; // PCはグローを強める
-          ctx.shadowBlur  = p.size * glowMult;
-          ctx.shadowColor = 'rgba(' + CYAN + ',' + Math.min(p.alpha * 0.9, 1).toFixed(3) + ')';
+        scr.textContent = out;
+        if (t < total) {
+          window.requestAnimationFrame(frame);
         } else {
-          ctx.shadowBlur = 0;
+          scr.textContent = text;
         }
-        ctx.fillStyle = 'rgba(' + CYAN + ',' + p.alpha.toFixed(3) + ')';
-        ctx.fill();
-      });
+      }
+      window.requestAnimationFrame(frame);
     }
 
     /* ----------------------------------------------------------
-       メインループ
+       4. 画面に入ったら .is-in
        ---------------------------------------------------------- */
-    function loop() {
-      ctx.clearRect(0, 0, W, H);
+    var revealEls = Array.prototype.slice.call(
+      document.querySelectorAll('[data-reveal], [data-scramble]')
+    );
 
-      var inf = getInf();
-
-      // パーティクルは sphere clip の外側も含む → clip前に描画
-      ctx.save();
-      drawParticles();
-      ctx.restore();
-
-      // リングも clip 外（球体より外に広がる）
-      ctx.save();
-      drawRings();
-      ctx.restore();
-
-      // 輪郭（clip 前に描いてクリッピングに巻き込まれないようにする）
-      ctx.save();
-      drawOutline();
-      ctx.restore();
-
-      // 内部波型曲線のみ球体内にクリップ
-      ctx.save();
-      clipToSphere();
-      ctx.shadowBlur = 0;
-      drawWaves(inf);
-      ctx.restore();
-
-      time++;
-      requestAnimationFrame(loop);
+    function show(el) {
+      el.classList.add('is-in');
+      if (el.hasAttribute('data-scramble')) runScramble(el);
     }
 
-    loop();
-  });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          show(entry.target);
+          io.unobserve(entry.target);
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
 
+      revealEls.forEach(function (el) { io.observe(el); });
+    } else {
+      revealEls.forEach(show);
+    }
+
+    /* 保険。観測が働かなくても、画面内の要素は必ず出す。 */
+    function rescue() {
+      var vh = window.innerHeight || 1;
+      revealEls.forEach(function (el) {
+        if (el.classList.contains('is-in')) return;
+        var r = el.getBoundingClientRect();
+        if (r.top < vh && r.bottom > 0) show(el);
+      });
+    }
+    setTimeout(rescue, 1600);
+    window.addEventListener('load', function () { setTimeout(rescue, 400); });
+
+    /* ----------------------------------------------------------
+       5〜6. スクロールに合わせた処理をひとつの rAF にまとめる
+       ---------------------------------------------------------- */
+    var driftEls = Array.prototype.slice.call(document.querySelectorAll('[data-drift]'));
+    driftEls.forEach(function (el) {
+      el.style.setProperty('--drift', el.getAttribute('data-drift') || 0);
+    });
+
+    var ticking = false;
+    var state = { solid: null, badge: null };
+
+    /** 要素の中心が画面のどこにいるかを -1.5〜1.5 で返す */
+    function progress(el) {
+      var vh = window.innerHeight || 1;
+      var r = el.getBoundingClientRect();
+      var p = (r.top + r.height / 2 - vh / 2) / vh;
+      return Math.max(-1.5, Math.min(1.5, p));
+    }
+
+    function update() {
+      ticking = false;
+
+      var y  = window.pageYOffset;
+      var vh = window.innerHeight || 1;
+      var max = Math.max(1, root.scrollHeight - vh);
+
+      // ページ全体の進み具合。固定背景の環がこれで回る。
+      root.style.setProperty('--pp', (y / max).toFixed(4));
+      if (dots) dots.setShift(y * 0.06);
+
+      // ヒーロー: ロゴの傾きと地の沈み込み
+      if (hero) hero.style.setProperty('--s', Math.min(1.4, y / vh).toFixed(4));
+
+      driftEls.forEach(function (el) {
+        el.style.setProperty('--p', progress(el).toFixed(4));
+      });
+
+      if (nav && hero) {
+        var solid = hero.getBoundingClientRect().bottom <= nav.offsetHeight;
+        if (solid !== state.solid) {
+          state.solid = solid;
+          nav.classList.toggle('is-solid', solid);
+        }
+      }
+
+      if (badge && hero) {
+        var passed = hero.getBoundingClientRect().bottom <= 0;
+        var atContact = contact
+          ? contact.getBoundingClientRect().top < vh * 0.75
+          : false;
+        var next = passed && !atContact ? 'show' : 'hide';
+        if (next !== state.badge) {
+          state.badge = next;
+          badge.classList.toggle('is-shown', next === 'show');
+        }
+      }
+    }
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  });
 })();

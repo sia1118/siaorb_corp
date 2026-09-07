@@ -15,25 +15,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * 子テーマのバージョン定数
  */
-define( 'SIAORB_CHILD_VERSION', '1.0.0' );
+define( 'SIAORB_CHILD_VERSION', '7.0.0' );
 
 /* ==========================================================================
  * アセット読み込み
  * ========================================================================== */
 
 /**
- * Inter フォント（Google Fonts）の読み込み
+ * 欧文・和文フォント（Google Fonts）の読み込み
+ *
+ * Chakra Petch … 欧文。角を落とした直線的な字面で、技術寄りの印象になる。
+ * Murecho      … 和文。字幅が狭く縦のストロークが立っているので、
+ *                丸ゴシック寄りの書体よりクールに見える。
+ *                Chakra Petch を先に書いているので、
+ *                ラテン文字は Chakra Petch、かなと漢字は Murecho が担当する。
  */
 function siaorb_enqueue_fonts() {
-	// Inter（本文・UI用）+ Cormorant Garamond（見出し飾り文字用）
 	wp_enqueue_style(
 		'siaorb-fonts',
-		'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,700&family=Inter:wght@400;500;600;700;900&display=swap',
+		'https://fonts.googleapis.com/css2'
+			. '?family=Chakra+Petch:wght@400;500;600;700'
+			. '&family=Murecho:wght@400;500;700'
+			. '&display=swap',
 		array(),
 		null
 	);
 }
 add_action( 'wp_enqueue_scripts', 'siaorb_enqueue_fonts' );
+
+/**
+ * Google Fonts への接続を先に開ける
+ */
+function siaorb_preconnect_fonts( $urls, $relation_type ) {
+	if ( 'preconnect' === $relation_type ) {
+		$urls[] = array( 'href' => 'https://fonts.googleapis.com' );
+		$urls[] = array( 'href' => 'https://fonts.gstatic.com', 'crossorigin' => '' );
+	}
+	return $urls;
+}
+add_filter( 'wp_resource_hints', 'siaorb_preconnect_fonts', 10, 2 );
 
 /**
  * カスタム CSS / JS の読み込み
@@ -133,9 +153,8 @@ function siaorb_company_info_shortcode() {
 				<td>
 					<ul>
 						<li>Web解析業務 / グロースハック</li>
-						<li>Webサイト制作 / システム開発 / アプリ開発</li>
-						<li>ウェブ解析士認定講座 / 上級ウェブ解析士講座の開講</li>
-						<li>ウェブディレクタースキル開発・コーチング事業</li>
+						<li>Webサイト制作 / システム開発 / アプリ開発のディレクション</li>
+						<li>ウェブ解析士 / 上級ウェブ解析士 認定講座の開講</li>
 					</ul>
 				</td>
 			</tr>
@@ -176,9 +195,12 @@ function siaorb_hide_header_on_front() {
 	if ( ! is_front_page() ) {
 		return;
 	}
-	// ヘッダー非表示
+	// ヘッダー本体と、スクロールで出てくる追従ヘッダーの両方を止める
 	echo '<style>' .
 		'#header,.l-header,.p-header{display:none!important;}' .
+		'#fix_header,.l-fixHeader,.p-fixHeader,.c-fixHeader,' .
+		'.-fix-header,.l-header__bar,#sp_menu_btn,.p-spMenu{display:none!important;}' .
+		'body.-fix-header,body.is-fixHeader{padding-top:0!important;}' .
 	'</style>' . "\n";
 }
 add_action( 'wp_head', 'siaorb_hide_header_on_front', 99 );
