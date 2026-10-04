@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * 子テーマのバージョン定数
  */
-define( 'SIAORB_CHILD_VERSION', '7.0.0' );
+define( 'SIAORB_CHILD_VERSION', '10.0.0' );
 
 /* ==========================================================================
  * アセット読み込み
@@ -246,6 +246,92 @@ function siaorb_favicon() {
 }
 add_action( 'wp_head', 'siaorb_favicon', 1 );
 add_action( 'admin_head', 'siaorb_favicon', 1 );
+
+/* ==========================================================================
+ * Google Tag Manager
+ * 全ページに出力する。管理画面・REST・フィードでは出さない。
+ * ========================================================================== */
+
+/**
+ * GTM のコンテナID
+ * 差し替えるときはここだけ変える。空文字にすると出力ごと止まる。
+ */
+define( 'SIAORB_GTM_ID', 'GTM-P7GMRMMV' );
+
+/**
+ * GTM を出力してよい画面かどうか
+ *
+ * 管理画面・ログイン後の裏側・REST・フィード・robots.txt では出さない。
+ * 計測対象は「実際に人が見るページ」だけに絞る。
+ */
+function siaorb_gtm_enabled() {
+	if ( ! SIAORB_GTM_ID ) {
+		return false;
+	}
+	if ( is_admin() || is_feed() || is_robots() ) {
+		return false;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return false;
+	}
+	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		return false;
+	}
+	if ( function_exists( 'wp_is_json_request' ) && wp_is_json_request() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * head 内のできるだけ上に GTM のスニペットを出す
+ *
+ * wp_head の優先度 0 で登録しているので、wp_head が出力するものの中では最も早い。
+ * （子テーマからは <head> の物理的な先頭までは遡れないため、ここが実質の最上部）
+ */
+function siaorb_gtm_head() {
+	if ( ! siaorb_gtm_enabled() ) {
+		return;
+	}
+	?>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','<?php echo esc_js( SIAORB_GTM_ID ); ?>');</script>
+<!-- End Google Tag Manager -->
+	<?php
+}
+add_action( 'wp_head', 'siaorb_gtm_head', 0 );
+
+/**
+ * <body> 直後に noscript を出す
+ *
+ * 本来の位置は wp_body_open（＝<body> の直後）。
+ * ただしテーマが wp_body_open() を呼ばない場合に何も出ないと困るので、
+ * 未出力のときだけ wp_footer で出し直す保険を入れてある。
+ * noscript は JS で後から挿せないため、この二段構えにしている。
+ * 二重出力は静的変数で防ぐ。
+ */
+function siaorb_gtm_noscript() {
+	static $done = false;
+
+	if ( $done || ! siaorb_gtm_enabled() ) {
+		return;
+	}
+	$done = true;
+
+	$src = 'https://www.googletagmanager.com/ns.html?id=' . rawurlencode( SIAORB_GTM_ID );
+	?>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="<?php echo esc_url( $src ); ?>"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+	<?php
+}
+add_action( 'wp_body_open', 'siaorb_gtm_noscript', 0 );
+add_action( 'wp_footer', 'siaorb_gtm_noscript', 0 );
 
 /* ==========================================================================
  * ユーティリティ

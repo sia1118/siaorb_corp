@@ -39,7 +39,7 @@ $cat = get_queried_object();
 							the_post();
 							$cats = get_the_category();
 							?>
-							<article class="siaorb-archive__item" id="post-<?php the_ID(); ?>">
+							<article class="siaorb-archive__item" id="post-<?php the_ID(); ?>" data-reveal="shear">
 								<a href="<?php the_permalink(); ?>" class="siaorb-archive__link">
 									<div class="siaorb-archive__thumb">
 										<?php if ( has_post_thumbnail() ) : ?>

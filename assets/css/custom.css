@@ -3,12 +3,14 @@
 
    考え方:
      ・地は白 + ブランド2色だけで作った淡いグラデーション。
-     ・ロゴは CSS の 3D で組む。外環は Z 軸、内環は Y 軸で動き続け、
-       全体はスクロールで傾く。波は静止させてロゴの読みを担保する。
+     ・ロゴは外環・内環・上昇曲線の3層に分けた SVG。カーソルに合わせて
+       層ごとに違う量だけずれ、スクロールで手前の環から広がって消える。
+     ・写真は使わない。ヒーローのロゴがそのままサービスへ移り、上昇曲線が
+       折れ線 → 工程 → 広がる円 と、章ごとの図版に形を変えていく。
+       そのためヒーローとサービスの間だけは断ち切らず、ひと続きにしてある。
      ・角丸のピルは使わない。ボタンも面の切り替えも角ゼロ・直線で、
        セクションは -9deg の斜めで断ち切る。
      ・ジャンプ率を大きく取る。極大の欧文 : 小さな和文 = およそ 10 : 1。
-     ・サービスの背景ではロゴがスクロールの進み具合に合わせて回り、拡大する。
 
    構成:
      0. トークン
@@ -78,11 +80,27 @@ body { color: var(--sia-ink); background-color: #fff; }
 /* フロントページの地は固定背景（.sia-bg）が担うので、素の地は透かす */
 body.siaorb-is-front { background-color: transparent; }
 
+/*
+   フロントページの地は .sia-bg（固定の黒）なので、
+   ヒーローより上に少しでも余白が残ると、そこから黒が覗いてしまう。
+   SWELL 側のラッパーが持つ上余白を、名前の候補をひと通り並べて打ち消す。
+   それでも残る環境差は custom.js が実測して詰める。
+*/
+body.siaorb-is-front { padding-top: 0 !important; }
+
+body.siaorb-is-front #all_wrap,
+body.siaorb-is-front #body_wrap,
+body.siaorb-is-front #content,
+body.siaorb-is-front #contents,
+body.siaorb-is-front #main_content,
+body.siaorb-is-front #main,
+body.siaorb-is-front .l-container,
 body.siaorb-is-front .l-content,
 body.siaorb-is-front .l-contents,
-body.siaorb-is-front #contents,
 body.siaorb-is-front .l-main,
-body.siaorb-is-front #main,
+body.siaorb-is-front .l-mainContent,
+body.siaorb-is-front .l-mainContent__inner,
+body.siaorb-is-front .w-beforeContents,
 body.siaorb-is-front .p-article,
 body.siaorb-is-front .l-article,
 body.siaorb-is-front .p-wrap,
@@ -211,18 +229,52 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
   clip-path: inset(50%);
 }
 
+/* 線を描いて現れる。SVG 用。
+   描く線に .sia-draw と pathLength="100" を付ける。
+   途中までしか描かない線（開いた環）は --len で長さを指定する。 */
+.sia-js [data-reveal="draw"] .sia-draw {
+  stroke-dasharray: var(--len, 100) 100;
+  stroke-dashoffset: var(--len, 100);
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.sia-js [data-reveal="draw"].is-in .sia-draw { stroke-dashoffset: 0; }
+
+.sia-js [data-reveal="draw"] .sia-fig__node {
+  opacity: 0;
+  transition: opacity 0.4s ease 0.9s;
+}
+.sia-js [data-reveal="draw"].is-in .sia-fig__node { opacity: 1; }
+
 .sia-js [data-drift] { will-change: transform; }
 
-@media (prefers-reduced-motion: reduce) {
-  .sia-js [data-reveal],
-  .sia-js [data-reveal] img,
-  .sia-js [data-drift] {
-    opacity: 1 !important;
-    transform: none !important;
-    clip-path: none !important;
-    transition: none !important;
-  }
+/*
+   動きを減らす設定のとき（html.sia-calm）。
+
+   Android は「ユーザー補助 → アニメーションを削除」だけでなく、
+   省電力モードでも この設定が有効になる。全部止めると画面が死んで見えるので、
+   位置の移動・回転・視差・スクランブルだけを止め、
+   現れ方は不透明度のフェードに置き換える。
+*/
+.sia-calm [data-reveal] {
+  opacity: 0;
+  transform: none !important;
+  clip-path: none !important;
+  transition: opacity 0.6s ease !important;
 }
+
+.sia-calm [data-reveal].is-in { opacity: 1; }
+
+.sia-calm [data-reveal] img {
+  transform: none !important;
+  clip-path: none !important;
+  transition: none !important;
+}
+
+.sia-calm .sia-draw { stroke-dashoffset: 0 !important; transition: none !important; }
+.sia-calm .sia-fig__node { opacity: 1 !important; transition: none !important; }
+
+/* 流れ（data-drift）は translate なので、transform とは別に止める */
+.sia-calm [data-drift] { translate: none !important; }
 
 /* ==========================================================================
    3. 共通パーツ
@@ -273,6 +325,7 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 }
 
 .sia-sec--services { background: var(--sia-tint); }
+.sia-sec--news     { background: #fff; }
 .sia-sec--company  { background: #fff; }
 
 .sia-sec--blue {
@@ -481,7 +534,105 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 .sia-nav__menu a:hover { color: var(--sia-blue) !important; }
 
 /* --------------------------------------------------------------------------
-   4-2. ヒーロー
+   4-2. ヒーローとサービスをつなぐ面（.sia-lead）
+        この2つだけは断ち切らず、ひと続きの面にする。
+        地は白からサービスの淡い青へ、境目を作らずに移る。
+        下辺だけ、ほかのセクションと同じ斜めで断ち切る。
+   -------------------------------------------------------------------------- */
+.sia-lead {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  background: linear-gradient(#fff 0, #fff 70vh, var(--sia-tint) 135vh);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--sia-cut)), 0 100%);
+  /* 中の飾りが横にはみ出しても、ページの幅を広げさせない */
+  overflow-x: clip;
+}
+
+.sia-lead > .sia-hero,
+.sia-lead > .sia-sec {
+  width: auto;
+  margin-inline: 0;
+  margin-top: 0;
+  background: transparent;
+  clip-path: none;
+}
+
+.sia-lead > .sia-sec { padding-top: clamp(40px, 5vw, 80px); }
+
+/* 追従するロゴを載せる面。画面いっぱいに張り付き、.sia-lead の下端で離れる。
+   既定では出さない（4-3 の「JS が動くとき」で出す）。 */
+.sia-lead__stage {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  height: 100vh;
+  margin-bottom: -100vh;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 位置と大きさは custom.js が決める。
+   出発点は動かないロゴ（.sia-logo）を測って合わせるので、ここでは指定しない。 */
+.sia-lead__logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.sia-lead__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* --g は「ロゴ → 1章の図版」の進み具合（0〜1）。手前の環ほど大きく広がり、先に消える。 */
+.sia-lead__layer--outer {
+  translate: calc(var(--mx, 0) * 34px) calc(var(--my, 0) * 34px);
+  scale: calc(1 + var(--g, 0) * 1.4);
+  opacity: calc(1 - var(--g, 0) * 1.5);
+}
+
+.sia-lead__layer--inner {
+  translate: calc(var(--mx, 0) * 20px) calc(var(--my, 0) * 20px);
+  scale: calc(1 + var(--g, 0) * 0.7);
+  opacity: calc(1 - var(--g, 0) * 1.25);
+}
+
+.sia-lead__layer--main {
+  translate: calc(var(--mx, 0) * 8px) calc(var(--my, 0) * 8px);
+  filter: drop-shadow(0 14px 22px rgba(15, 47, 180, 0.14));
+}
+
+.sia-stage__line { stroke-width: 56; }
+.sia-stage__under,
+.sia-stage__nodes .sia-fig__node { opacity: 0; }
+.sia-lead__stage .sia-fig__branch { stroke-dasharray: 100 100; stroke-dashoffset: 100; }
+
+/* 外へ広がる円。中心から膨らみながら薄れていく動きを、1本ずつずらして繰り返す。 */
+@keyframes sia-ripple {
+  0%   { transform: scale(0.62); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: scale(1.24); opacity: 0; }
+}
+
+.sia-stage__under--pulse .sia-fig__branch {
+  transform-origin: 600px 600px;
+  animation: sia-ripple 3.6s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+.sia-stage__under--pulse .sia-fig__branch:nth-of-type(2) { animation-delay: 1.2s; }
+.sia-stage__under--pulse .sia-fig__branch:nth-of-type(3) { animation-delay: 2.4s; }
+
+/* --------------------------------------------------------------------------
+   4-2b. ヒーロー
    -------------------------------------------------------------------------- */
 .sia-hero {
   position: relative;
@@ -493,9 +644,13 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
   padding-block: clamp(150px, 18vh, 210px) clamp(70px, 10vh, 120px);
 }
 
+/* 地のにじみと粒子は .sia-lead の直下に置く。追従するロゴより奥。 */
 .sia-hero__wash {
   position: absolute;
-  inset: -20% -10%;
+  top: -12vh;
+  left: 0;
+  right: 0;
+  height: 130vh;
   z-index: 0;
   pointer-events: none;
   background:
@@ -504,11 +659,26 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
     radial-gradient(40% 40% at 10% 12%, rgba(15, 47, 180, 0.10), transparent 70%),
     radial-gradient(38% 38% at 30% 96%, rgba(104, 212, 224, 0.16), transparent 70%);
   filter: blur(10px);
-  translate: 0 calc(var(--s, 0) * 60px);
+  /* --s はスクロール、--mx / --my はカーソルの位置（-0.5〜0.5）。custom.js が入れる。 */
+  translate: calc(var(--mx, 0) * -30px) calc(var(--s, 0) * 60px + var(--my, 0) * -30px);
 }
 
-/* --- ロゴを立体で組む --- */
-.sia-orb {
+.sia-hero__dots {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100vh;
+  display: block;
+  pointer-events: none;
+}
+
+/* --- 動かないロゴ ---
+   追従するロゴを出さないとき（スマホ・動きを減らす設定・JS なし）に見せる。
+   手前から 外環 → 内環 → 上昇曲線 の3層。
+   スクロールすると手前の層ほど大きく広がり、先に消える。 */
+.sia-logo {
   --w: min(62vw, 98vh, 980px);
   position: absolute;
   top: 50%;
@@ -517,48 +687,25 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
   width: var(--w);
   height: var(--w);
   translate: 0 -50%;
-  perspective: 1500px;
   pointer-events: none;
 }
 
-.sia-orb__gyro {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transform:
-    rotateX(calc(var(--s, 0) * -26deg))
-    rotateZ(calc(var(--s, 0) * 12deg));
-}
-
-.sia-orb__ring,
-.sia-orb__ring2 {
-  position: absolute;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-/* 外環: 下に切れ目のある青い環。面の中で回り続ける。 */
-.sia-orb__ring {
-  inset: 0;
-  border: calc(var(--w) * 0.031) solid var(--sia-blue);
-  -webkit-mask-image: conic-gradient(from 190deg, #000 0 282deg, transparent 282deg);
-  mask-image: conic-gradient(from 190deg, #000 0 282deg, transparent 282deg);
-}
-
-/* 内環: シアン。Y 軸で往復するので立体に見える。
-   1回転させると1周に2回ぺしゃんこになるため、往復にしてある。 */
-.sia-orb__ring2 {
-  inset: 12.6%;
-  border: calc(var(--w) * 0.027) solid var(--sia-cyan);
-}
-
-.sia-orb__wave {
+.sia-logo__layer {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: visible;
-  transform: translateZ(1px);
+}
+
+.sia-logo__layer--outer {
+  scale: calc(1 + var(--s, 0) * 1.2);
+  opacity: calc(1 - var(--s, 0) * 1.5);
+}
+
+.sia-logo__layer--inner {
+  scale: calc(1 + var(--s, 0) * 0.6);
+  opacity: calc(1 - var(--s, 0) * 1.25);
 }
 
 .sia-hero__inner {
@@ -606,33 +753,25 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
   gap: 12px;
 }
 
-/* --- 読み込み時 --- */
+/* --- 読み込み時 ---
+   線は 0.9 秒で描き終える。文字はそれを待たずに出る。 */
 @keyframes sia-draw { from { stroke-dasharray: 0 100; } to { stroke-dasharray: 100 0; } }
-@keyframes sia-ringIn { from { opacity: 0; transform: scale(0.62); } to { opacity: 1; transform: scale(1); } }
-@keyframes sia-spinZ { to { rotate: 360deg; } }
-@keyframes sia-swingY {
-  0%   { rotate: y -58deg; }
-  50%  { rotate: y  58deg; }
-  100% { rotate: y -58deg; }
-}
+@keyframes sia-drawOpen { from { stroke-dashoffset: 78; } to { stroke-dashoffset: 0; } }
 @keyframes sia-fade { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
-/* transform で登場し、rotate で回り続ける。別プロパティなので同時にかかる。 */
-.sia-orb__ring {
-  animation:
-    sia-ringIn 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both,
-    sia-spinZ 26s linear 0.9s infinite;
+/* 外環は一部が開いているので、78% までしか描かない */
+.sia-logo__layer--outer circle,
+.sia-lead__layer--outer circle {
+  stroke-dasharray: 78 100;
+  animation: sia-drawOpen 0.9s cubic-bezier(0.3, 0.6, 0.2, 1) both;
 }
 
-.sia-orb__ring2 {
-  animation:
-    sia-ringIn 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both,
-    sia-swingY 11s cubic-bezier(0.45, 0, 0.55, 1) 1s infinite;
-}
-
-.sia-orb__wave path {
+.sia-logo__layer--inner circle,
+.sia-logo__layer--wave path,
+.sia-lead__layer--inner circle,
+.sia-stage__line {
   stroke-dasharray: 100 0;
-  animation: sia-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.45s both;
+  animation: sia-draw 0.9s cubic-bezier(0.3, 0.6, 0.2, 1) both;
 }
 
 .sia-hero__ja      { animation: sia-fade 0.8s ease 0.5s both; }
@@ -640,53 +779,122 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 .sia-hero__actions { animation: sia-fade 0.8s ease 0.7s both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sia-orb__ring, .sia-orb__ring2, .sia-orb__wave path,
+  .sia-logo__layer circle, .sia-logo__layer path,
   .sia-hero__ja, .sia-hero__lead, .sia-hero__actions {
     animation: none;
     opacity: 1;
     transform: none;
-    rotate: none;
   }
-  .sia-orb__gyro { transform: none; }
+  .sia-logo__layer { scale: none; opacity: 1; }
   .sia-hero__wash { translate: none; }
 }
 
+/* --------------------------------------------------------------------------
+   4-3. サービス
+        図版は線だけで描く。色は青・シアン・墨の3つ。
+   -------------------------------------------------------------------------- */
+.sia-fig { display: block; width: 100%; height: auto; overflow: visible; }
 
-.sia-chapter { padding-block: clamp(34px, 3.6vw, 58px); }
+.sia-fig__guide,
+.sia-fig__axis,
+.sia-fig__branch,
+.sia-fig__line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
-.sia-chapter__grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(24px, 3.5vw, 56px);
-  align-items: center;
+/* 線は細く保つ。主線でも画面上で 3〜4px ほど。 */
+.sia-fig__guide  { stroke: rgba(15, 47, 180, 0.2); stroke-width: 2; }
+.sia-fig__axis   { stroke: var(--sia-ink); stroke-width: 2; }
+.sia-fig__branch { stroke: var(--sia-cyan); stroke-width: 6; }
+.sia-fig__line   { stroke: var(--sia-blue); stroke-width: 8; }
+.sia-fig__node   { fill: #fff; stroke: var(--sia-blue); stroke-width: 5; }
+
+.sia-chapter {
+  position: relative;
+  padding-block: clamp(30px, 5vw, 48px);
 }
 
-.sia-chapter--a .sia-chapter__media { grid-column: 1 / span 7; }
-.sia-chapter--a .sia-chapter__body  { grid-column: 8 / span 5; }
-.sia-chapter--b .sia-chapter__media { grid-column: 6 / span 7; grid-row: 1; }
-.sia-chapter--b .sia-chapter__body  { grid-column: 1 / span 5; grid-row: 1; }
-
-.sia-chapter__media {
-  margin: 0;
-  /* 写真の実寸でグリッドが押し広がらないようにする */
-  min-width: 0;
-  overflow: hidden;
-  border-radius: var(--sia-r-s);
-  translate: calc(var(--p, 0) * var(--drift, 0) * 1px) 0;
+/* 章番号。輪郭だけの大きな数字を本文の面の右上から覗かせ、
+   本文より遅く流して奥に見せる。下半分は面の後ろに隠れる。 */
+.sia-chapter__num {
+  position: relative;
+  z-index: 0;
+  display: none; /* 追従の図版を出す組み方のときだけ見せる */
+  align-self: flex-end;
+  width: fit-content;
+  margin: 0 0 -0.4em auto;
+  font-size: clamp(7rem, 13vw, 12rem);
+  font-weight: 700;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(15, 47, 180, 0.28);
+  pointer-events: none;
+  user-select: none;
+  translate: 0 calc(var(--p, 0) * var(--drift, 0) * 1px);
 }
 
-.sia-chapter__media img {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
+.sia-chapter__fig {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 clamp(18px, 4vw, 28px);
+  max-width: 460px;
 }
 
+/* 本文は半透明の白い面に載せる。角は丸めない。 */
 .sia-chapter__body {
+  position: relative;
+  z-index: 1;
   min-width: 0;
-  translate: calc(var(--p, 0) * var(--drift, 0) * 1px) 0;
+  max-width: 560px;
+  padding: clamp(24px, 3.4vw, 44px);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 60px rgba(15, 47, 180, 0.12);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* --- JS が動くとき ---
+   ヒーローのロゴを画面に張り付かせ、章ごとの置き場所へ運ぶ（custom.js）。
+   図版は本文の面の後ろを通る。大きく見せ、面に一部が隠れてもよいものとする。
+   張り付きは position: sticky。スクロールそのものには手を入れない。
+   動きを減らす設定のときは、この組み方をせず各章の図版を出す。 */
+.sia-js:not(.sia-calm) .sia-lead__stage { display: block; }
+.sia-js:not(.sia-calm) .sia-logo { visibility: hidden; } /* 場所だけ残す。位置を測るため。 */
+.sia-js:not(.sia-calm) .sia-chapter__fig { display: none; }
+
+/* PC：本文の面を、章ごとに右・左・右と入れ替える。図版はその反対側に来る。 */
+@media (min-width: 901px) {
+  .sia-js:not(.sia-calm) .sia-chapter {
+    min-height: 96vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .sia-js:not(.sia-calm) .sia-chapter__body,
+  .sia-js:not(.sia-calm) .sia-story .sia-sechead {
+    box-sizing: border-box;
+    width: min(100%, 600px);
+    max-width: none;
+  }
+
+  .sia-js:not(.sia-calm) .sia-chapter__num { display: block; }
+
+  .sia-js:not(.sia-calm) .sia-chapter:nth-of-type(even) { align-items: flex-start; }
+  .sia-js:not(.sia-calm) .sia-chapter:nth-of-type(even) .sia-chapter__num {
+    align-self: flex-start;
+    margin: 0 auto -0.4em 0;
+  }
+
+  /* 見出しは最初の章と同じ右側に置く。左はロゴが通るので空けておく。 */
+  .sia-js:not(.sia-calm) .sia-story .sia-sechead { margin: 0 0 0 auto; }
+  .sia-js:not(.sia-calm) .sia-story .sia-sechead__en { font-size: clamp(2.6rem, 6vw, 5rem) !important; }
+}
+
+/* スマホ：図版は画面の上半分に張り付く。章と章の間を空け、そこで変形を見せる。 */
+@media (max-width: 900px) {
+  .sia-js:not(.sia-calm) .sia-chapter { margin-top: 56vh; padding-block: 0; }
+  .sia-js:not(.sia-calm) .sia-story { padding-bottom: 8vh; }
 }
 
 .sia-chapter__en {
@@ -748,42 +956,67 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 .sia-news {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(24px, 3vw, 40px);
+  gap: clamp(24px, 3vw, 44px);
 }
 
-.sia-news__link { display: block; text-decoration: none !important; color: inherit !important; }
+/* 3枚が少しずつ遅れて出る */
+.sia-js .sia-news__item:nth-child(2) { transition-delay: 0.08s; }
+.sia-js .sia-news__item:nth-child(3) { transition-delay: 0.16s; }
+
+.sia-news__link {
+  display: block;
+  min-width: 0;
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
 .sia-news__thumb { overflow: hidden; border-radius: var(--sia-r-s); }
 
 .sia-news__thumb img,
 .sia-news__nothumb {
   display: block;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .sia-news__nothumb { background: var(--sia-tint); }
-.sia-news__link:hover .sia-news__thumb img { transform: scale(1.04); }
+.sia-news__link:hover .sia-news__thumb img { transform: scale(1.05); }
 
 .sia-news__meta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 16px 0 8px;
+  gap: 14px;
+  margin: 18px 0 10px;
   font-size: 0.74rem;
   color: var(--sia-ink-2);
   font-variant-numeric: tabular-nums;
 }
-.sia-news__cat { color: var(--sia-blue); font-weight: 700; }
+
+/* 日付は欧文なので Chakra Petch が当たる。字間を少し開けて読みやすくする。 */
+.sia-news__meta time { letter-spacing: 0.06em; }
+
+.sia-news__cat {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--sia-blue);
+  padding-bottom: 0.2em;
+  border-bottom: 2px solid var(--sia-blue);
+}
 
 .sia-news__title {
   margin: 0;
-  font-size: 0.98rem;
-  font-weight: 700;
-  line-height: 1.7;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.75;
   letter-spacing: -0.01em;
   color: var(--sia-ink);
+  transition: color 0.2s ease;
 }
+
+.sia-news__link:hover .sia-news__title { color: var(--sia-blue); }
 
 /* --------------------------------------------------------------------------
    4-5. 会社概要
@@ -924,12 +1157,34 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 /* --------------------------------------------------------------------------
    4-6. お問い合わせ（Contact Form 7）
    -------------------------------------------------------------------------- */
-.sia-contact {
-  display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
-  gap: clamp(40px, 6vw, 88px);
-  align-items: start;
+/* 右の補足ブロックを外したので、1カラムで組む。
+   幅は .sia-form 側の max-width で決まる。 */
+.sia-contact { display: block; }
+
+/* 右に置くロゴの線画。白とシアンだけで、フォームの邪魔をしない濃さにする。 */
+.sia-contact__mark {
+  position: absolute;
+  top: 50%;
+  right: max(var(--sia-gut), calc((100vw - var(--sia-max)) / 2 + var(--sia-gut)));
+  z-index: 0;
+  width: min(36vw, 500px);
+  height: auto;
+  overflow: visible;
+  pointer-events: none;
+  translate: 0 calc(-50% + var(--p, 0) * var(--drift, 0) * 1px);
 }
+
+.sia-contact__mark circle,
+.sia-contact__mark path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 20;
+  stroke-linecap: round;
+}
+.sia-contact__mark .sia-contact__mark-inner { stroke: var(--sia-cyan); stroke-width: 16; }
+.sia-contact__mark path { stroke-width: 34; }
+
+.sia-sec--blue > .sia-wrap { position: relative; z-index: 1; }
 
 .sia-contact__lead {
   margin: 0 0 clamp(36px, 4.5vw, 60px);
@@ -937,22 +1192,6 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
   font-size: clamp(0.95rem, 1.25vw, 1.1rem);
   line-height: 2.05;
   color: rgba(255, 255, 255, 0.85);
-}
-
-.sia-contact__aside {
-  background: rgba(255, 255, 255, 0.1);
-  padding: clamp(22px, 2.4vw, 32px);
-}
-
-.sia-contact__aside-title { margin: 0 0 1.3em; font-size: 0.88rem; font-weight: 700; color: #fff; }
-.sia-contact__aside dl { margin: 0; }
-.sia-contact__aside div + div { margin-top: 1.5em; }
-.sia-contact__aside dt { font-size: 0.72rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 0.45em; }
-.sia-contact__aside dd { margin: 0; font-size: 0.9rem; line-height: 1.7; color: #fff; }
-.sia-contact__aside a {
-  color: var(--sia-cyan);
-  text-decoration: underline;
-  text-underline-offset: 0.25em;
 }
 
 .sia-form { max-width: 38rem; }
@@ -1124,6 +1363,9 @@ body.siaorb-is-front .c-pagetop { left: auto !important; right: clamp(14px, 2.2v
   padding: 100px 0 80px;
   color: #fff;
 }
+
+/* 記事カードは少しずつ遅れて出る */
+.sia-js .siaorb-archive__item:nth-child(even) { transition-delay: 0.08s; }
 
 .siaorb-archive__hero-inner {
   box-sizing: border-box;
@@ -1361,7 +1603,7 @@ body.siaorb-is-front .c-pagetop { left: auto !important; right: clamp(14px, 2.2v
     padding-block: clamp(130px, 17vh, 180px) calc(min(96vw, 620px) * 0.66 + 44px);
   }
 
-  .sia-orb {
+  .sia-logo {
     --w: min(96vw, 620px);
     top: auto;
     bottom: calc(min(96vw, 620px) * -0.34);
@@ -1370,27 +1612,28 @@ body.siaorb-is-front .c-pagetop { left: auto !important; right: clamp(14px, 2.2v
     translate: none;
   }
 
+  /* スマホでは粒子を出さない */
+  .sia-hero__dots { display: none; }
+
+  .sia-contact__mark { display: none; }
+
   .sia-nav__cta { display: none; }
-
-  .sia-chapter { padding-block: clamp(30px, 5vw, 48px); }
-
-  .sia-chapter__grid { grid-template-columns: minmax(0, 1fr); gap: clamp(20px, 4vw, 30px); }
-
-  .sia-chapter--a .sia-chapter__media,
-  .sia-chapter--b .sia-chapter__media { grid-column: 1; grid-row: 1; translate: none; }
-  .sia-chapter--a .sia-chapter__body,
-  .sia-chapter--b .sia-chapter__body { grid-column: 1; grid-row: 2; translate: none; }
 
 }
 
 @media (max-width: 860px) {
-  .sia-contact { grid-template-columns: 1fr; gap: clamp(36px, 6vw, 52px); }
   .sia-news { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .siaorb-archive__inner { grid-template-columns: 1fr; gap: 48px; }
   .siaorb-archive__sidebar { position: static; }
 }
 
 @media (max-width: 720px) {
+  /* 記事一覧のヘッダーは、スマホでは高さを詰める */
+  .siaorb-archive__hero { padding: 40px 0 32px; }
+  .siaorb-archive__hero-en { margin-bottom: 8px; }
+  .siaorb-archive__hero-title { margin-bottom: 8px; }
+  .siaorb-archive__hero-desc { font-size: 0.82rem; line-height: 1.85; }
+  .siaorb-archive__body { padding: 40px 0 72px; }
   .sia-def { grid-template-columns: 1fr; gap: 12px; }
   .sia-greeting { grid-template-columns: 1fr; }
   .sia-greeting__media { max-width: 200px; }
