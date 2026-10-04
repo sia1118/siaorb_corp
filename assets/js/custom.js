@@ -310,7 +310,7 @@
 
   /* ============================================================
      追従するロゴ
-     ヒーローのロゴ（#sia-lead-logo）を画面に張り付かせたまま、
+     ヒーローのロゴ（#sia-lead-logo）を画面に固定したまま、
      章ごとの置き場所へ運ぶ。運びながら、上昇曲線（#sia-stage の主線）を
        ロゴの曲線 → 1章の形 → 2章の形 → 3章の形
      と変形させる。形は data-shapes に path の d で並んでいる。
@@ -411,10 +411,11 @@
       var vh = window.innerHeight || 1;
 
       if (k === 0) {
-        // 動かないロゴと同じ場所。どちらも .sia-lead の中にあるので、スクロールしても変わらない。
+        // 動かないロゴと同じ場所。
+        // 横は面の左端から、縦は .sia-lead の上端から測る（＝ページ先頭での画面上の位置）。
         var a = still.getBoundingClientRect();
         var b = lead.getBoundingClientRect();
-        return { x: a.left - b.left, y: a.top - b.top, w: a.width };
+        return { x: a.left - layer.getBoundingClientRect().left, y: a.top - b.top, w: a.width };
       }
 
       if (narrow.matches) {

@@ -563,15 +563,17 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 
 .sia-lead > .sia-sec { padding-top: clamp(40px, 5vw, 80px); }
 
-/* 追従するロゴを載せる面。画面いっぱいに張り付き、.sia-lead の下端で離れる。
+/* 追従するロゴを載せる面。画面いっぱいに固定する。
+   .sia-lead の clip-path が中身ごと切り抜くので、.sia-lead が画面から
+   出ていけば、この面も下辺の斜めに沿って一緒に見えなくなる。
+   position: sticky は使わない。SWELL が body に overflow-x: hidden を
+   指定しており、その中では画面に張り付かないため。
    既定では出さない（4-3 の「JS が動くとき」で出す）。 */
 .sia-lead__stage {
   display: none;
-  position: sticky;
-  top: 0;
+  position: fixed;
+  inset: 0;
   z-index: 0;
-  height: 100vh;
-  margin-bottom: -100vh;
   overflow: hidden;
   pointer-events: none;
 }
@@ -855,7 +857,7 @@ body:not(.siaorb-is-front) .siaorb-footer-logo { display: none !important; }
 /* --- JS が動くとき ---
    ヒーローのロゴを画面に張り付かせ、章ごとの置き場所へ運ぶ（custom.js）。
    図版は本文の面の後ろを通る。大きく見せ、面に一部が隠れてもよいものとする。
-   張り付きは position: sticky。スクロールそのものには手を入れない。
+   面は画面に固定するだけで、スクロールそのものには手を入れない。
    動きを減らす設定のときは、この組み方をせず各章の図版を出す。 */
 .sia-js:not(.sia-calm) .sia-lead__stage { display: block; }
 .sia-js:not(.sia-calm) .sia-logo { visibility: hidden; } /* 場所だけ残す。位置を測るため。 */
